@@ -1,3 +1,18 @@
+### add file that are larger than 200 mb
+dt_wind_sensor_raw.csv
+
+### macOS ###
+.DS_Store
+
+### raw data ###
+/data
+
+### others ###
+/others
+
+# Rproj
+*.Rproj
+
 # History files
 .Rhistory
 .Rapp.history

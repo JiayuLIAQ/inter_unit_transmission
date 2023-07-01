@@ -1,0 +1,13 @@
+﻿test_id,exp_date,start_time,end_time,sf6_rate,note
+1,24-Mar-23,03:00pm ,05:00pm,,"It was the first trial run. There was no flow control and measurement, no wind sensor, no temp and RH measurement."
+2,31-Mar-23,06:00pm,07:30pm,2.5,It was raining from 07:30pm and thus the test was stopped.
+3,3-Apr-23,05:00pm ,09:00pm,1.5,
+4,6-Apr-23,12:00pm,04:00pm,1.5,"Increase flow rate to 5ml/min at 04:00pm to verify the receptor room’s measurement, as the readings of receptor room were quite low."
+5,21-Apr-23,11:30am,03:00pm,1.5,R_room tubing was connected to Chanel 03 and R_window tubing was connected to Chanel 04. 
+6,3-May-23,11:00am,03:00pm,1.5,It was raining during 03:00pm – 03:30pm
+7,3-May-23,03:30pm,05:30pm,1.5,It was raining during 03:00pm – 03:30pm
+8,4-May-23,10:30am,09:00pm,1.5,It was raining during 12:45pm – 02:05pm. The downstair tubing was placed at inside of source room. The reading of Chanel 5 was representative the source room as the same as Chanel 1.
+9,10-May-23,10:00am,07:45pm,1.5,"Gas was finished at 07:30pm. Wind sensor of living for horizontal direction was facing different with the other horizontal wind sensors, where the “↓” symbol was facing to outside of the room."
+10,15-May-23,10:40am,09:00pm,1.5,"The gas was changed with a new cylinder, and the initial gas flow was up to about 10ml/min in the first 1 min. Wind sensor of living for horizontal direction was adjusted to the same as the other horizontal wind sensors, where the “↓” symbol was facing to inside of the room."
+11,17-May-23,11:30am,09:00pm,1.5,
+12,18-May-23,06:20pm,09:30pm,1.5,"The gas was changed with a new cylinder, and the gas flow was unstable with fluctuation from the 0.9 L/min to 1.8 L/min. The SF6 concentration in the source room was relatively stable."
