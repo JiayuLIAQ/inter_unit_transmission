@@ -55,7 +55,7 @@ ggsave("plot/windsensor_vel_mag_raw.png", width = 16, height = 8)
 
 dt_wind_sensor[!is.na(test_id)] %>% 
   ggplot(aes(datetime, vel_angle , color = paste(room_type, s_r, position, "\nStation", wind_sensor_unit))) +
-  geom_line() + 
+  geom_point(size = 0.5) + 
   facet_wrap(vars(test_id), scales = "free") +
   scale_color_discrete("Location\nWind sensor unit") +
   guides(color = guide_legend(nrow = 1)) +
