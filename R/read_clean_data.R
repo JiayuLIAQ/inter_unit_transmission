@@ -27,7 +27,10 @@ add_general_condition <- function(dt, dt_condi) {
   for (i in 1:length(dt_condi$start_datetime) ) {
     dt[datetime >= dt_condi$start_datetime[i] & datetime <= dt_condi$end_datetime[i],
        `:=`(test_id = dt_condi$test_id[i],
-            sf6_rate = dt_condi$sf6_rate[i])]
+            sf6_rate = dt_condi$sf6_rate[i],
+            building_type = dt_condi$building_type[i],
+            scenario = dt_condi$scenario[i]
+            )]
   }
 }
 # dt <- copy(dt_velocicalc)
@@ -55,7 +58,7 @@ dt_innova[, innova_ch := as.numeric(str_sub(table_name, start = -2L, end = -1L))
 dt_innova <-cond_source_and_receptor[cond_innova_vc,
                          on = .(test_id, s_r)][dt_innova, on = .(test_id, innova_ch) ]# %>% .[!is.na(test_id)]
 
-dt_wind_sensor[, wind_sensor_unit := as.numeric(str_sub(basename(path), start = 9L, end = 10L)) ]
+# dt_wind_sensor[, wind_sensor_unit := as.numeric(str_sub(basename(path), start = 9L, end = 10L)) ]
 
 dt_wind_sensor <- cond_source_and_receptor[cond_wind_sensor,
                          on = .(test_id, s_r, room_type)][dt_wind_sensor, on = .(test_id, wind_sensor_unit) ]# %>% .[!is.na(test_id)]

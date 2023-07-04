@@ -8,7 +8,7 @@ dt_innova[!is.na(test_id)] %>%
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
 
-ggsave("plot/SF6_raw.png", width = 16, height = 8)
+ggsave("plots/SF6_raw.png", width = 16, height = 8)
 
 # velocicalc raw----------------------------------------------
 dt_velocicalc[!is.na(test_id)] %>% 
@@ -19,7 +19,7 @@ dt_velocicalc[!is.na(test_id)] %>%
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
 
-ggsave("plot/VC_vel_raw.png", width = 16, height = 8)
+ggsave("plots/VC_vel_raw.png", width = 16, height = 8)
 
 
 dt_velocicalc[!is.na(test_id)] %>% 
@@ -29,7 +29,7 @@ dt_velocicalc[!is.na(test_id)] %>%
   scale_color_discrete("locations\nVC unit")+
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
-ggsave("plot/VC_temperature_raw.png", width = 16, height = 8)
+ggsave("plots/VC_temperature_raw.png", width = 16, height = 8)
 
 
 dt_velocicalc[!is.na(test_id)] %>% 
@@ -39,7 +39,7 @@ dt_velocicalc[!is.na(test_id)] %>%
   scale_color_discrete("locations\nVC unit")+
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
-ggsave("plot/VC_RH_raw.png", width = 16, height = 8)
+ggsave("plots/VC_RH_raw.png", width = 16, height = 8)
 
 
 # windsensor raw----------------------------------------------
@@ -50,7 +50,7 @@ dt_wind_sensor[!is.na(test_id)] %>%
   scale_color_discrete("Location\nWind sensor unit") +
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
-ggsave("plot/windsensor_vel_mag_raw.png", width = 16, height = 8)
+ggsave("plots/windsensor_vel_mag_raw.png", width = 16, height = 8)
 
 
 dt_wind_sensor[!is.na(test_id)] %>% 
@@ -60,4 +60,4 @@ dt_wind_sensor[!is.na(test_id)] %>%
   scale_color_discrete("Location\nWind sensor unit") +
   guides(color = guide_legend(nrow = 1)) +
   theme(legend.position = "top")
-ggsave("plot/windsensor_vel_angle_raw.png", width = 16, height = 8)
+ggsave("plots/windsensor_vel_angle_raw.png", width = 16, height = 8)

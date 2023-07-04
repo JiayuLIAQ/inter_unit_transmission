@@ -192,6 +192,7 @@ read_wind_sensor <- function(path) {
   dt <- rbindlist(list(dt_3, dt_2, dt_1),
                   fill = T,
                   use.names = T)
+  dt[, wind_sensor_unit := as.numeric(str_sub(basename(path), start = 9L, end = 10L))]
   dt
 }
 

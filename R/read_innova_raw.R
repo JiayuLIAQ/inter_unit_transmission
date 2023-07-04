@@ -3,7 +3,7 @@ source("R/functions.R")
 path_mdb <- data.table(path = list.files(no.. = FALSE, full.names = TRUE, recursive = TRUE,
                                          pattern = "\\.mdb$"))
 
-map(path_mdb$path, read_mdb_and_write_xlsx)
+# map(path_mdb$path, read_mdb_and_write_xlsx)
 
 dt_innova <- map(path_mdb$path, read_mdb) %>% rbindlist
 
@@ -11,7 +11,7 @@ dt_innova[, datetime := as_datetime(tim) + hours(8)]
 
 dt_innova %>% setnames(old = "meas_0", new = "sf6_conc")
 
-dt_innova[,c("datetime","sf6_conc","table_name","path")] %>% fwrite("innova_raw.csv")
+dt_innova[,c("datetime","sf6_conc","table_name","path")] %>% fwrite("clean_data/innova/innova_raw.csv")
 
 
 

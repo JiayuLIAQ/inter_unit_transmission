@@ -1,41 +1,79 @@
-﻿test_id,wind_sensor_unit,s_r,position,room_type,loc
-5,12,s,h,bedroom,window
-5,10,s,v,bedroom,window
-5,5,r,h,bedroom,window
-5,7,r,v,bedroom,window
-6,12,s,h,bedroom,window
-6,10,s,v,bedroom,window
-6,5,r,h,bedroom,window
-6,7,r,v,bedroom,window
-7,12,s,h,bedroom,window
-7,10,s,v,bedroom,window
-7,5,r,h,bedroom,window
-7,7,r,v,bedroom,window
-8,12,s,h,bedroom,window
-8,10,s,v,bedroom,window
-8,5,r,h,bedroom,window
-8,7,r,v,bedroom,window
-9,12,s,h,bedroom,window
-9,10,s,v,bedroom,window
-9,5,r,h,bedroom,window
-9,7,r,v,bedroom,window
-9,11,,h,living_room,window
-9,1,,v,living_room,window
-10,12,s,h,bedroom,window
-10,10,s,v,bedroom,window
-10,5,r,h,bedroom,window
-10,7,r,v,bedroom,window
-10,11,,h,living_room,window
-10,1,,v,living_room,window
-11,12,s,h,bedroom,window
-11,10,s,v,bedroom,window
-11,5,r,h,bedroom,window
-11,7,r,v,bedroom,window
-11,11,,h,living_room,window
-11,1,,v,living_room,window
-12,12,s,h,bedroom,window
-12,10,s,v,bedroom,window
-12,5,r,h,bedroom,window
-12,7,r,v,bedroom,window
-12,11,,h,living_room,window
-12,1,,v,living_room,window
+test_id	wind_sensor_unit	s_r	position	room_type	loc
+5	12	s	h	bedroom	window
+5	10	s	v	bedroom	window
+5	5	r	h	bedroom	window
+5	7	r	v	bedroom	window
+6	12	s	h	bedroom	window
+6	10	s	v	bedroom	window
+6	5	r	h	bedroom	window
+6	7	r	v	bedroom	window
+7	12	s	h	bedroom	window
+7	10	s	v	bedroom	window
+7	5	r	h	bedroom	window
+7	7	r	v	bedroom	window
+8	12	s	h	bedroom	window
+8	10	s	v	bedroom	window
+8	5	r	h	bedroom	window
+8	7	r	v	bedroom	window
+9	12	s	h	bedroom	window
+9	10	s	v	bedroom	window
+9	5	r	h	bedroom	window
+9	7	r	v	bedroom	window
+9	11		h	living_room	window
+9	1		v	living_room	window
+10	12	s	h	bedroom	window
+10	10	s	v	bedroom	window
+10	5	r	h	bedroom	window
+10	7	r	v	bedroom	window
+10	11		h	living_room	window
+10	1		v	living_room	window
+11	12	s	h	bedroom	window
+11	10	s	v	bedroom	window
+11	5	r	h	bedroom	window
+11	7	r	v	bedroom	window
+11	11		h	living_room	window
+11	1		v	living_room	window
+12	12	s	h	bedroom	window
+12	10	s	v	bedroom	window
+12	5	r	h	bedroom	window
+12	7	r	v	bedroom	window
+12	11		h	living_room	window
+12	1		v	living_room	window
+13	11	s	h	living_room	window
+13	1	s	v	living_room	window
+13	5	r	h	living_room	window
+13	7	r	v	living_room	window
+13	12		h	bedroom	window
+13	10		v	bedroom	window
+14	11	s	h	living_room	
+14	1	s	v	living_room	
+14	5	r	h	living_room	
+14	7	r	v	living_room	
+15	11	s	h	living_room	
+15	1	s	v	living_room	
+15	5	r	h	living_room	
+15	7	r	v	living_room	
+16	11	s	h	living_room	
+16	1	s	v	living_room	
+16	5	r	h	living_room	
+16	7	r	v	living_room	
+17A	11	s	h	living_room	
+17A	1	s	v	living_room	
+17A	5	r	h	living_room	
+17A	7	r	v	living_room	
+17B	11	s	h	living_room	
+17B	1	s	v	living_room	
+17B	5	r	h	living_room	
+17B	7	r	v	living_room	
+18	11	s	h	living_room	
+18	1	s	v	living_room	
+18	5	r	h	living_room	
+18	7	r	v	living_room	
+19	11	s	h	living_room	
+19	1	s	v	living_room	
+19	5	r	h	living_room	
+19	7	r	v	living_room	
+20	11	s	h	living_room	
+20	1	s	v	living_room	
+20	5	r	h	living_room	
+20	7	r	v	living_room	
