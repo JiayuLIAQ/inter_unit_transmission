@@ -174,16 +174,41 @@ dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %
   theme(legend.position = "top")
 ggsave("plots/windsensor_vel_mag_WIMDA_19_by_date_raw.png", width = 16, height = 8)
 
+dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[!is.na(time_)] %>%
+  setorder(datetime) %>%
+  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
+  ggplot(aes(time_, vel_mag_WIMWV_3 , color = paste("Station", wind_sensor_unit))) +
+  geom_line() + 
+  facet_wrap(vars(date(datetime)), scales = "free") +
+  scale_color_discrete("Wind sensor unit") +
+  guides(color = guide_legend(nrow = 1)) +
+  coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
+  theme(legend.position = "top")
+ggsave("plots/windsensor_vel_mag_WIMWV_3_by_date_raw.png", width = 16, height = 8)
 
 dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
   .[!is.na(time_)] %>%
   setorder(datetime) %>%
-  .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
-  ggplot(aes(time_, vel_angle , color = paste("Station", wind_sensor_unit))) +
+  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
+  ggplot(aes(time_, vel_angle_WIMDA_13 , color = paste("Station", wind_sensor_unit))) +
   geom_point(size = 0.5) + 
   facet_wrap(vars(date(datetime)), scales = "free") +
   scale_color_discrete("Wind sensor unit") +
   guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
-ggsave("plots/windsensor_vel_angle_by_date_raw.png", width = 16, height = 8)
+ggsave("plots/windsensor_vel_angle_WIMDA_13_by_date_raw.png", width = 16, height = 8)
+
+dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[!is.na(time_)] %>%
+  setorder(datetime) %>%
+  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
+  ggplot(aes(time_, vel_angle_WIMWV_1 , color = paste("Station", wind_sensor_unit))) +
+  geom_point(size = 0.5) + 
+  facet_wrap(vars(date(datetime)), scales = "free") +
+  scale_color_discrete("Wind sensor unit") +
+  guides(color = guide_legend(nrow = 1)) +
+  coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
+  theme(legend.position = "top")
+ggsave("plots/windsensor_vel_angle_WIMWV_1_by_date_raw.png", width = 16, height = 8)
