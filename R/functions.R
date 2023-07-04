@@ -18,6 +18,7 @@ library(ggpmisc)
 
 library(tidyr)
 library(stringr)
+library(forcats)
 
 # VelociCalc with co2----------------------------------------------
 
