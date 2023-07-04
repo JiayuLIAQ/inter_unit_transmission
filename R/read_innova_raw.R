@@ -11,7 +11,8 @@ dt_innova[, datetime := as_datetime(tim) + hours(8)]
 
 dt_innova %>% setnames(old = "meas_0", new = "sf6_conc")
 
-dt_innova[,c("datetime","sf6_conc","table_name","path")] %>% fwrite("clean_data/innova/innova_raw.csv")
+dt_innova[,c("datetime","sf6_conc","table_name","path")] %>% .[, sf6_conc := sf6_conc * 24.45 / 146.06] %>% # change mg/m3 to ppm
+  fwrite("clean_data/innova/innova_raw.csv")
 
 
 

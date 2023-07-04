@@ -17,11 +17,12 @@ dt_wind_sensor[, datetime := ymd_hms(paste(GPZDA_4, GPZDA_3, GPZDA_2,
                                      ) + hours(8)]
 
 dt_wind_sensor[, vel_mag := as.numeric(WIMDA_19)]
-dt_wind_sensor[, vel_angle := WIMWV_1]
+dt_wind_sensor[, vel_angle := WIMDA_13]
 dt_wind_sensor[, temp := WIMDA_11]
 dt_wind_sensor[, rh := WIMDA_9]
 
-dt_wind_sensor[, c("datetime","vel_mag","vel_angle","temp","rh", "wind_sensor_unit")] [!is.na(vel_mag)] %>% fwrite("clean_data/wind_sensor/dt_wind_sensor.csv")
+dt_wind_sensor[, c("datetime","vel_mag","vel_angle","temp","rh", "wind_sensor_unit")] [!is.na(vel_mag)] %>% 
+  fwrite("clean_data/wind_sensor/dt_wind_sensor.csv")
 
 dt_wind_sensor$WIMWV_4 %>% unique
 
