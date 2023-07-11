@@ -17,15 +17,16 @@ library(plotly)
 
 Raw data measured by Innova are plotted using the codes below:
 
-```{r fig.height=35, fig.width=10, message=FALSE, warning=FALSE}
+```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- dt_innova[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+  .[, innova_ch := paste("Ch.", innova_ch)] %>%
   setorder(datetime) %>%
-  ggplot(aes(time_, sf6_conc, color = paste("Ch.", innova_ch))) +
+  ggplot(aes(time_, sf6_conc, color = innova_ch) ) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("Innova channels")+
   # guides(color = guide_legend(nrow = 1)) +
-  scale_y_log10() +
+  scale_y_log10("SF6 concentration (ppm)") +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) #+
   # theme(legend.position = "top")
 
@@ -36,13 +37,14 @@ ggplotly(p)
 # VelociCalc
 ## Velocity
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
-p <- dt_velocicalc[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+p <- 
+copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+  .[, vc_unit := paste("VC-", vc_unit)] %>%
   setorder(datetime) %>%
   ggplot(aes(time_, vel, color = paste("VC-", vc_unit))) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("VC unit")+
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -52,13 +54,13 @@ ggplotly(p)
 ## Temperature
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
-dt_velocicalc[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+  .[, vc_unit := paste("VC-", vc_unit)] %>%
   setorder(datetime) %>%
-  ggplot(aes(time_, temperature, color = paste("VC-", vc_unit))) +
+  ggplot(aes(time_, temperature, color = vc_unit)) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("VC unit")+
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -68,13 +70,13 @@ ggplotly(p)
 ## Relative Humidity
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
-dt_velocicalc[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
+  .[, vc_unit := paste("VC-", vc_unit)] %>%
   setorder(datetime) %>%
-  ggplot(aes(time_, RH, color = paste("VC-", vc_unit))) +
+  ggplot(aes(time_, RH, color = vc_unit)) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("VC unit")+
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -85,15 +87,15 @@ ggplotly(p)
 ## Data from $WIMDA <19>
 
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
-p <- dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+p <- 
+  copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[, wind_sensor_unit := paste("Station", wind_sensor_unit)] %>%
   .[!is.na(time_)] %>%
   setorder(datetime) %>%
-  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
-  ggplot(aes(time_, vel_mag_WIMDA_19 , color = paste("Station", wind_sensor_unit))) +
+  ggplot(aes(time_, vel_mag_WIMDA_19 , color = wind_sensor_unit)) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("Wind sensor unit") +
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -102,15 +104,15 @@ ggplotly(p)
 
 ## Data from $WIMWV <3>
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
-p <- dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+p <- 
+  copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[, wind_sensor_unit := paste("Station", wind_sensor_unit)] %>%
   .[!is.na(time_)] %>%
   setorder(datetime) %>%
-  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
-  ggplot(aes(time_, vel_mag_WIMWV_3 , color = paste("Station", wind_sensor_unit))) +
+  ggplot(aes(time_, vel_mag_WIMWV_3 , color = wind_sensor_unit)) +
   geom_line() + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("Wind sensor unit") +
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -119,15 +121,15 @@ ggplotly(p)
 
 ## Data from $WIMDA <13>
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
-p <- dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+p <- 
+  copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[, wind_sensor_unit := paste("Station", wind_sensor_unit)] %>%
   .[!is.na(time_)] %>%
   setorder(datetime) %>%
-  # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
-  ggplot(aes(time_, vel_angle_WIMDA_13 , color = paste("Station", wind_sensor_unit))) +
+  ggplot(aes(time_, vel_angle_WIMDA_13 , color = wind_sensor_unit)) +
   geom_point(size = 0.5) + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("Wind sensor unit") +
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
@@ -136,15 +138,16 @@ ggplotly(p)
 
 ## Data from $WIMWV <1>
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
-p <- dt_wind_sensor[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+p <- 
+  copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
+  .[, wind_sensor_unit := paste("Station", wind_sensor_unit)] %>%
   .[!is.na(time_)] %>%
   setorder(datetime) %>%
   # .[, test_id := fct_inorder(paste("Test",test_id)) ] %>% 
-  ggplot(aes(time_, vel_angle_WIMWV_1 , color = paste("Station", wind_sensor_unit))) +
+  ggplot(aes(time_, vel_angle_WIMWV_1 , color = wind_sensor_unit)) +
   geom_point(size = 0.5) + 
   facet_grid(fct_inorder(format(date(datetime), format = "%b %d"))~., scales = "free_y") +
   scale_color_discrete("Wind sensor unit") +
-  guides(color = guide_legend(nrow = 1)) +
   coord_cartesian(xlim = c(hms::as_hms("10:00:00"),hms::as_hms("22:00:00")) ) +
   theme(legend.position = "top")
 
