@@ -18,9 +18,10 @@ library(DT)
 # https://medium.com/@SportSciData/https-medium-com-collinsneil306-how-to-create-interactive-reports-with-r-markdown-part-i-4fa9df46cd9
 # https://rstudio.github.io/DT/functions.html
 # https://youtu.be/qLEkUjxk7e8  Yihui Xie | One R Markdown Document, Fourteen Demos | RStudio (2020)
-
-datatable(dt_innova[, c("datetime","sf6_conc","innova_ch")], rownames = FALSE, filter = "top" ) %>% 
-  formatRound('sf6_conc', 3) %>% formatDate('datetime', method = "toLocaleString")
+copy(dt_innova)[, c("datetime","sf6_conc","innova_ch")][, datetime := datetime - hours(8)] %>% 
+  .[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")] %>%
+  .[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc") %>%
+  datatable( rownames = FALSE, filter = "top" ) %>% formatRound(c(2:7), 3) %>% formatDate('datetime', method = "toLocaleString")
 ```
 
 # Innova
