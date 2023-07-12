@@ -1,7 +1,7 @@
 ---
-title: "Trying to use R Markdown to check raw data"
+title: " Check raw data and experimental conditions"
 author: "Jiayu Li"
-date: "11 July 2023"
+date: "12 July 2023"
 output:
   html_document:
     toc: true
@@ -11,9 +11,57 @@ output:
 ```{r, include=FALSE}
 source("R/read_clean_data_without_condi.R")
 library(plotly)
+library(DT)
 ```
 
-```{r}
+
+# Conditions
+```{r echo=FALSE}
+library(DT)
+cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
+cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
+cond_source_and_receptor <- fread("clean_data/conditions/source_and_receptor.csv")
+cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+
+  # datatable(cond_general_scenario)
+  
+
+```
+
+## General conditions
+```{r echo=FALSE}
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
+cond_general_scenario  %>%
+  datatable( rownames = FALSE, filter = "top" )# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
+```
+
+## Innova conditions
+```{r echo=FALSE}
+    cond_innova_vc %>% datatable(rownames = FALSE, filter = "top")
+```
+
+## Source and receptor conditions
+```{r echo=FALSE}
+    cond_source_and_receptor %>% datatable(rownames = FALSE, filter = "top" )
+```
+
+## Wind sensor conditions
+```{r  echo=FALSE}
+    cond_wind_sensor %>% datatable(rownames = FALSE, filter = "top" )
+```
+
+
+
+
+
+# Raw data
+
+## Innova:
+
+```{r echo=FALSE}
 library(DT)
 # https://medium.com/@SportSciData/https-medium-com-collinsneil306-how-to-create-interactive-reports-with-r-markdown-part-i-4fa9df46cd9
 # https://rstudio.github.io/DT/functions.html
@@ -23,8 +71,6 @@ copy(dt_innova)[, c("datetime","sf6_conc","innova_ch")][, datetime := datetime -
   .[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc") %>%
   datatable( rownames = FALSE, filter = "top" ) %>% formatRound(c(2:7), 3) %>% formatDate('datetime', method = "toLocaleString")
 ```
-
-# Innova
 
 Raw data measured by Innova are plotted using the codes below:
 
@@ -45,8 +91,8 @@ ggplotly(p)
 ```
 
 
-# VelociCalc
-## Velocity
+## VelociCalc
+### Velocity
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
 copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
@@ -62,7 +108,7 @@ copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetim
 ggplotly(p)
 ```
 
-## Temperature
+### Temperature
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
 copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
@@ -78,7 +124,7 @@ copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetim
 ggplotly(p)
 ```
 
-## Relative Humidity
+### Relative Humidity
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
 copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetime), second(datetime), sep = ":") )]%>% 
@@ -94,8 +140,8 @@ copy(dt_velocicalc)[, time_ := hms::as_hms(paste( hour(datetime), minute(datetim
 ggplotly(p)
 ```
 
-# Wind sensor
-## Data from $WIMDA <19>
+## Wind sensor
+### Data from $WIMDA <19>
 
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
@@ -130,7 +176,7 @@ p <-
 ggplotly(p)
 ```
 
-## Data from $WIMDA <13>
+### Data from $WIMDA <13>
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
   copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 
@@ -147,7 +193,7 @@ p <-
 ggplotly(p)
 ```
 
-## Data from $WIMWV <1>
+### Data from $WIMWV <1>
 ```{r fig.height=35, fig.width=8, message=FALSE, warning=FALSE}
 p <- 
   copy(dt_wind_sensor)[, time_ := hms::as_hms(format(datetime, format = "%H:%M:%S") )] %>% 

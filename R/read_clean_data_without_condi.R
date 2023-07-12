@@ -33,7 +33,7 @@ dt_wind_sensor <- dt_wind_sensor[, c(
 dt_wind_sensor[, datetime := round_date(datetime, unit = "minute")]
 
 dt_wind_sensor <-
-  dt_wind_sensor[, lapply (.SD, mean), .SDcols = c(
+  dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
     "vel_mag_WIMDA_19",
     "vel_mag_WIMWV_3",
     "vel_angle_WIMDA_13",

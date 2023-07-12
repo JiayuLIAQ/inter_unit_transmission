@@ -1,0 +1,57 @@
+---
+title: " Check experimental conditions"
+author: "Jiayu Li"
+date: "12 July 2023"
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+
+```{r, include=FALSE}
+source("R/read_clean_data_without_condi.R")
+library(plotly)
+library(DT)
+```
+
+# Conditions
+
+```{r echo=FALSE}
+library(DT)
+cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
+cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
+cond_source_and_receptor <- fread("clean_data/conditions/source_and_receptor.csv")
+cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+```
+
+## General conditions
+
+```{r echo=FALSE}
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
+cond_general_scenario  %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
+```
+
+## Innova conditions
+
+```{r echo=FALSE}
+    cond_innova_vc %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Source and receptor conditions
+
+```{r echo=FALSE}
+    cond_source_and_receptor%>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Wind sensor conditions
+
+```{r  echo=FALSE}
+    cond_wind_sensor %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```

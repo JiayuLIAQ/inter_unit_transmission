@@ -1,0 +1,90 @@
+---
+title: "Check raw data using Shiny"
+author: "Jiayu Li"
+date: "2023-07-12"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+source("R/read_clean_data_without_condi.R")
+library(plotly)
+library(DT)
+```
+
+```{r load conditions, echo=FALSE}
+library(DT)
+cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
+cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
+cond_source_and_receptor <- fread("clean_data/conditions/source_and_receptor.csv")
+cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+```
+
+
+```{r}
+# Install the necessary packages
+
+# Assume that `df` is your data frame and it has columns `date`, `CO2`, `RH`, `temperature`
+
+# Define UI for app
+df <- dt_innova[, date := date(datetime)]
+
+ui <- fluidPage(
+  titlePanel("Time Series Data Viewer"),
+
+  sidebarLayout(
+    sidebarPanel(
+      # dateInput('date', 'Select Date', value = min(df$date), min = min(df$date), max = max(df$date)),
+      selectInput('date', 'Select Date', choices = unique(as_date(df$datetime))),
+      
+      selectInput('variable', 'Select Parameter', c('sf6_conc')),
+      checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+   
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+    # Filter the data based on user input
+    filteredData <- df %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable, innova_ch)
+
+    # Plot the data
+    # p <- ggplot(filteredData, aes(x = datetime, y = get(input$variable),color = paste("Ch.", innova_ch))) +
+    #   geom_line() +
+    #   labs(x = 'datetime', y = input$variable, title = paste(input$variable, 'on', input$date))
+    # ggplotly(p)
+    
+      # if (input$log) {
+      # filteredData <- mutate(filteredData, !!input$variable := log(get(input$variable)))
+      # }
+    
+     plot_ly(filteredData, x = ~datetime, y = ~get(input$variable), color = ~paste(innova_ch), type = 'scatter', mode = 'lines') %>%
+      # layout(title = paste(input$variable, 'on', input$date), xaxis = list(title = 'Time'), yaxis = list(title = input$variable))
+ # layout(title = paste(input$variable, 'on', input$date), xaxis = list(title = 'Time'), yaxis = list(title = ifelse(input$log, paste("Log", input$variable), input$variable)))
+  layout(title = paste(input$variable, 'on', input$date), 
+             xaxis = list(title = 'Time'), 
+             yaxis = list(title = input$variable, type = ifelse(input$log, "log", "linear")))
+  
+ 
+  })
+}
+
+# Run the app
+shinyApp(ui = ui, server = server)
+```
+
