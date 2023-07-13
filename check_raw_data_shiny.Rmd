@@ -1,8 +1,11 @@
 ---
-title: "Check raw data using Shiny"
+title: "Check raw data and experimental conditions"
 author: "Jiayu Li"
 date: "2023-07-12"
-output: html_document
+output:
+  html_document:
+    toc: true
+    theme: united
 runtime: shiny
 ---
 
@@ -14,9 +17,11 @@ knitr::opts_chunk$set(echo = TRUE)
 source("R/read_clean_data_without_condi.R")
 library(plotly)
 library(DT)
+library(shiny)
 ```
 
-```{r load conditions, echo=FALSE}
+
+```{r echo=FALSE}
 library(DT)
 cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
 cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
@@ -28,21 +33,26 @@ cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
 ```
 
 
-```{r}
-# Install the necessary packages
-
-# Assume that `df` is your data frame and it has columns `date`, `CO2`, `RH`, `temperature`
-
-# Define UI for app
+# Raw data
+## Innova
+```{r echo=FALSE}
 df <- dt_innova[, date := date(datetime)]
 
-ui <- fluidPage(
-  titlePanel("Time Series Data Viewer"),
+# date_with_data <- df$date %>% unique
+# 
+# date_range <- seq.Date(min(df$date), max(df$date), by = "day")
+# 
+# date_range - date_with_data
+# setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+
+ui_1 <- fluidPage(
+  # titlePanel("Time Series Data Viewer"),
 
   sidebarLayout(
     sidebarPanel(
-      # dateInput('date', 'Select Date', value = min(df$date), min = min(df$date), max = max(df$date)),
-      selectInput('date', 'Select Date', choices = unique(as_date(df$datetime))),
+      dateInput('date', 'Select Date', value = max(df$date), min = min(df$date), max = max(df$date),
+                datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date),
+      # selectInput('date', 'Select Date', choices = unique(as_date(df$datetime))),
       
       selectInput('variable', 'Select Parameter', c('sf6_conc')),
       checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
@@ -56,35 +66,228 @@ ui <- fluidPage(
 )
 
 # Define server logic for timeseries plot
-server <- function(input, output) {
+server_1 <- function(input, output) {
   output$timeseriesPlot <- renderPlotly({
-    # Filter the data based on user input
+
     filteredData <- df %>%
       filter(date == ymd(input$date)) %>%
       select(datetime, input$variable, innova_ch)
 
-    # Plot the data
-    # p <- ggplot(filteredData, aes(x = datetime, y = get(input$variable),color = paste("Ch.", innova_ch))) +
-    #   geom_line() +
-    #   labs(x = 'datetime', y = input$variable, title = paste(input$variable, 'on', input$date))
-    # ggplotly(p)
-    
-      # if (input$log) {
-      # filteredData <- mutate(filteredData, !!input$variable := log(get(input$variable)))
-      # }
-    
-     plot_ly(filteredData, x = ~datetime, y = ~get(input$variable), color = ~paste(innova_ch), type = 'scatter', mode = 'lines') %>%
-      # layout(title = paste(input$variable, 'on', input$date), xaxis = list(title = 'Time'), yaxis = list(title = input$variable))
- # layout(title = paste(input$variable, 'on', input$date), xaxis = list(title = 'Time'), yaxis = list(title = ifelse(input$log, paste("Log", input$variable), input$variable)))
-  layout(title = paste(input$variable, 'on', input$date), 
-             xaxis = list(title = 'Time'), 
-             yaxis = list(title = input$variable, type = ifelse(input$log, "log", "linear")))
-  
- 
+    p1 <- plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste(innova_ch),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste(input$variable, 'on', input$date),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable,
+          type = ifelse(input$log, "log", "linear")
+        )
+      )
+     p1 
   })
 }
 
 # Run the app
+shinyApp(ui = ui_1, server = server_1)
+```
+
+## VelociCalc
+```{r echo=FALSE}
+df_2 <- dt_velocicalc[, date := date(datetime)]
+
+ui_2 <- fluidPage(
+  # titlePanel("Time Series Data Viewer"),
+
+  sidebarLayout(
+    sidebarPanel(
+      dateInput('date', 'Select Date', value = max(df_2$date), min = min(df_2$date), max = max(df_2$date),
+                datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date),
+      
+      selectInput('variable', 'Select Parameter', c('vel', 'temperature','RH')) #,
+      # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+   
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_2 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- df_2 %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable, equip_unit)
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ equip_unit,
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste(input$variable, 'on', input$date),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable#,
+          # type = ifelse(input$log, "log", "linear")
+        )
+      )
+
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_2, server = server_2)
+```
+
+## Wind Sensor
+```{r echo=FALSE, out.height= 10,}
+# df_3 <- dt_wind_sensor[, date := date(datetime)]
+
+
+wind_sensor_loc <- cond_wind_sensor[,c("wind_sensor_unit","position")] %>% unique 
+
+df_3 <- wind_sensor_loc[dt_wind_sensor, 
+                on = .(wind_sensor_unit)][wind_sensor_unit %in% c(12,10), 
+                                          sensor_tree := "1: 12(h); 10(v)"][wind_sensor_unit %in% c(5,7), 
+                                          sensor_tree := "2: 5(h); 7(v)"][wind_sensor_unit %in% c(11,1), 
+                                          sensor_tree := "3: 11(h); 1(v)"][, date := date(datetime)]
+
+df_3[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+
+ui <- fluidPage(
+  # titlePanel("Time Series Data Viewer"),
+
+  sidebarLayout(
+    sidebarPanel(
+      dateInput('date', 'Select Date', value = max(df_3$date), min = min(df_3$date), max = max(df_3$date),
+                datesdisabled = setdiff(seq.Date(min(df_3$date), max(df_3$date), by = "day"), df_3$date %>% unique) %>% as_date),
+            selectInput('variable_2', 'Select Parameter', c('u', 
+                                                    'v', 
+                                                    'w')),
+      selectInput('variable', 'Select Parameter', c('vel_mag_WIMDA_19', 
+                                                    'vel_mag_WIMWV_3', 
+                                                    'vel_angle_WIMDA_13',
+                                                    'vel_angle_WIMWV_1',
+                                                    'temp_WIMDA_5'))
+      # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+   
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot_2"),
+      plotlyOutput("timeseriesPlot_1")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server <- function(input, output) {
+  output$timeseriesPlot_2 <- renderPlotly({
+
+    filteredData <- copy(df_3) %>% .[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "u",
+    "v",
+    "w"
+  ), by = .(datetime,sensor_tree,date)] %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable_2, sensor_tree)
+      
+      
+  plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable_2),
+      color = ~ paste(sensor_tree),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste(input$variable_2, 'on', input$date),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable_2#,
+          # type = ifelse(input$log, "log", "linear")
+        )
+      )
+
+  })
+  
+  output$timeseriesPlot_1 <- renderPlotly({
+
+    filteredData <- copy(df_3) %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable, wind_sensor_unit)
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste(wind_sensor_unit),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste(input$variable, 'on', input$date),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable#,
+          # type = ifelse(input$log, "log", "linear")
+        )
+      )
+
+  })
+}
+# Run the app
 shinyApp(ui = ui, server = server)
 ```
+
+
+
+
+## General conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
+cond_general_scenario  %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
+```
+
+## Innova conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_innova_vc %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Source and receptor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_source_and_receptor%>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Wind sensor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_wind_sensor %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+
 
