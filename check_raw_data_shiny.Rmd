@@ -1,7 +1,7 @@
 ---
 title: "Check raw data and experimental conditions"
 author: "Jiayu Li"
-date: "2023-07-12"
+date: "14 July 2023"
 output:
   html_document:
     toc: true
@@ -38,13 +38,6 @@ cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
 ```{r echo=FALSE}
 df <- dt_innova[, date := date(datetime)]
 
-# date_with_data <- df$date %>% unique
-# 
-# date_range <- seq.Date(min(df$date), max(df$date), by = "day")
-# 
-# date_range - date_with_data
-# setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
-
 ui_1 <- fluidPage(
   # titlePanel("Time Series Data Viewer"),
 
@@ -77,7 +70,7 @@ server_1 <- function(input, output) {
       filteredData,
       x = ~ datetime,
       y = ~ get(input$variable),
-      color = ~ paste(innova_ch),
+      color = ~ paste("Ch.", innova_ch),
       type = 'scatter',
       mode = 'lines'
     ) %>%
@@ -153,7 +146,7 @@ shinyApp(ui = ui_2, server = server_2)
 ```
 
 ## Wind Sensor
-```{r echo=FALSE, out.height= 10,}
+```{r echo=FALSE}
 # df_3 <- dt_wind_sensor[, date := date(datetime)]
 
 
@@ -213,7 +206,7 @@ server <- function(input, output) {
       filteredData,
       x = ~ datetime,
       y = ~ get(input$variable_2),
-      color = ~ paste(sensor_tree),
+      color = ~ paste("Tree",sensor_tree),
       type = 'scatter',
       mode = 'lines'
     ) %>%
@@ -238,7 +231,7 @@ server <- function(input, output) {
       filteredData,
       x = ~ datetime,
       y = ~ get(input$variable),
-      color = ~ paste(wind_sensor_unit),
+      color = ~ paste("Station", wind_sensor_unit),
       type = 'scatter',
       mode = 'lines'
     ) %>%
@@ -254,13 +247,13 @@ server <- function(input, output) {
   })
 }
 # Run the app
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server, options = list(height = 800) )
 ```
 
 
 
 
-## General conditions
+# General conditions
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 cond_general_scenario[, note := iconv(note, to = "utf-8")]
