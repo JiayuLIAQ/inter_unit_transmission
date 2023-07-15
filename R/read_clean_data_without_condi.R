@@ -53,11 +53,11 @@ dt_velocicalc[, s_r := str_to_lower(s_r)]
 dt_velocicalc[, datetime := round_date(datetime, unit = "minute")]
 
 # write them out-----------------------
-
-# make them wide
+# 
+# # make them wide
 # dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
 # dt_innova <- dt_innova[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc")
-
+# 
 # dt_wind_sensor[, wind_sensor_unit := paste0("from_Station_", wind_sensor_unit)]
 # dt_wind_sensor <- dt_wind_sensor %>% dcast(datetime~wind_sensor_unit, value.var = c("vel_mag_WIMDA_19",
 #                                                                                     "vel_mag_WIMWV_3",
@@ -66,25 +66,31 @@ dt_velocicalc[, datetime := round_date(datetime, unit = "minute")]
 #                                                                                     "temp_WIMDA_5",
 #                                                                                     "rh_WIMDA_9")#,fun.aggregate = mean
 # )
-
-# dt_velocicalc <- 
-#   dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
-
-
-# dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame 
 # 
-# n_tables <- unique(date(dt_wide_all$datetime) ) %>% length 
+# dt_velocicalc <-
+#   dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
+# 
+# 
+# dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
+# 
+# n_tables <- unique(date(dt_wide_all$datetime) ) %>% length
 # table_names <- unique(format(dt_wide_all$datetime, format = "%B_%d") )
 # 
 # # class(test)
 # for(i in 1:n_tables){
-#   xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]], 
-#                    file="wide_data_2.xlsx", 
+#   xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+#                    file="wide_data_1.xlsx",
 #                    sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
 # }
 # 
 # for(i in 13:n_tables){
-#   xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]], 
-#                    file="wide_data_2.xlsx", 
+#   xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+#                    file="wide_data_2.xlsx",
+#                    sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+# }
+# 
+# for(i in 20:n_tables){
+#   xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+#                    file="wide_data_3.xlsx",
 #                    sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
 # }

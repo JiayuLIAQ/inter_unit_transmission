@@ -1,0 +1,281 @@
+---
+title: "Analysis"
+author: "Jiayu Li"
+date: "17 July 2023"
+output:
+  html_document:
+    toc: true
+    theme: united
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r read data, include=FALSE}
+source("R/read_clean_data_without_condi.R")
+library(plotly)
+library(DT)
+library(shiny)
+```
+
+
+```{r read condition files, echo=FALSE}
+library(DT)
+cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
+cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
+cond_source_and_receptor <- fread("clean_data/conditions/source_and_receptor.csv")
+cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+
+cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) ]
+cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
+```
+
+# Conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
+cond_general_scenario  %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
+```
+
+<!-- ## Innova conditions -->
+<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+<!--     cond_innova_vc %>% -->
+<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+<!-- ``` -->
+
+<!-- ## Source and receptor conditions -->
+<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+<!--     cond_source_and_receptor%>% -->
+<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+<!-- ``` -->
+
+<!-- ## Wind sensor conditions -->
+<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+<!--     cond_wind_sensor %>% -->
+<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+<!-- ``` -->
+
+```{r add conditions general, echo=FALSE}
+add_general_condition <- function(dt, dt_condi) {
+  for (i in 1:length(dt_condi$start_datetime) ) {
+    dt[datetime >= dt_condi$start_datetime[i] & datetime <= dt_condi$end_datetime[i],
+       `:=`(test_id = dt_condi$test_id[i],
+            exp_id = dt_condi$exp_id[i],
+            sf6_rate = dt_condi$sf6_rate[i],
+            building_type = dt_condi$building_type[i],
+            scenario = dt_condi$scenario[i],
+            test_type = dt_condi$test_type[i],
+            receptor_door = dt_condi$receptor_door[i]
+            )]
+  }
+}
+
+add_general_condition(dt_velocicalc, cond_general_scenario)
+add_general_condition(dt_innova, cond_general_scenario)
+add_general_condition(dt_wind_sensor, cond_general_scenario)
+
+```
+
+```{r add conditions velocicalc, echo=FALSE}
+dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
+                         on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on = .(test_id, s_r, loc, vc_unit) ] %>% .[!is.na(test_id)]
+```
+
+```{r add conditions innova, echo=FALSE}
+dt_innova <-cond_source_and_receptor[cond_innova_vc,
+                         on = .(test_id, s_r)][dt_innova, on = .(test_id, innova_ch) ] %>% .[!is.na(test_id)]
+```
+
+```{r add conditions, echo=FALSE}
+
+dt_wind_sensor <- cond_source_and_receptor[cond_wind_sensor,
+                         on = .(test_id, s_r, room_type)][dt_wind_sensor, on = .(test_id, wind_sensor_unit) ] %>% .[!is.na(test_id)]
+dt_wind_sensor[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+# correct test_id == 9 that "the MARKER was facing to outside of the room."
+dt_wind_sensor[test_id == 9, u := -u]
+dt_wind_sensor[test_id == 9, v := -v]
+
+cols <- names(dt_wind_sensor)[c(1:9, 12:14,21:26)]
+
+dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "u",
+    "v",
+    "w"
+  ), by = cols]
+
+```
+
+
+# Raw data
+
+Please note that the `experimental ID` is relabeled according to the condition table above (the `exp_id` column).
+
+## Innova
+
+```{r echo=FALSE}
+df <- dt_innova
+
+ui_1 <- fluidPage(
+
+  sidebarLayout(
+    sidebarPanel(
+      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
+      selectInput('variable', 'Select Parameter', c('sf6_conc')),
+      checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- copy(df)[exp_id == input$exp_id]
+    
+    filteredData[s_r == "s", s_r := "Source"]
+    filteredData[s_r == "r", s_r := "Receptor"]
+    
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste(s_r, loc),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
+          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
+          # "Building type: ", filteredData$building_type %>% unique
+          ),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable,
+          type = ifelse(input$log, "log", "linear")
+        )
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1)
+```
+
+
+## VelociCalc
+```{r echo=FALSE}
+df_2 <- dt_velocicalc
+
+ui_1 <- fluidPage(
+
+  sidebarLayout(
+    sidebarPanel(
+      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_2$exp_id)), selected = 13),
+      selectInput('variable', 'Select Parameter', c('vel','temperature',"RH"))
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- copy(df_2)[exp_id == input$exp_id]
+    
+    filteredData[s_r == "s", s_r := "Source"]
+    filteredData[s_r == "r", s_r := "Receptor"]
+    
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste(s_r, loc),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
+          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
+          # "Building type: ", filteredData$building_type %>% unique
+          ),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable
+        )
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1)
+```
+
+
+## Wind sensor
+```{r echo=FALSE}
+df_3 <- dt_wind_sensor
+
+ui_1 <- fluidPage(
+
+  sidebarLayout(
+    sidebarPanel(
+      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_3$exp_id)), selected = 13),
+      selectInput('variable', 'Select Parameter', c('u','v',"w"))
+    ),
+
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- copy(df_3)[exp_id == input$exp_id]
+    
+    filteredData[s_r == "s", s_r := "Source"]
+    filteredData[s_r == "r", s_r := "Receptor"]
+    
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste(s_r, loc, room_type),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
+          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
+          # "Building type: ", filteredData$building_type %>% unique
+          ),
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable
+        )
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1)
+```
