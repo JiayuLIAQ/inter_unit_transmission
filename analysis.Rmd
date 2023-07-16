@@ -36,12 +36,13 @@ cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
 ```
 
 # Conditions
-
-```{r echo=FALSE, message=FALSE, warning=FALSE}
-cond_general_scenario[, note := iconv(note, to = "utf-8")]
-cond_general_scenario  %>%
-  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
-```
+<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE} -->
+<!-- cond_general_scenario[, note := iconv(note, to = "utf-8")] -->
+<!-- copy(cond_general_scenario)  %>%  -->
+<!--   .[, start_datetime := start_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+<!--    .[, end_datetime := end_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString") -->
+<!-- ``` -->
 
 <!-- ## Innova conditions -->
 <!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
@@ -61,7 +62,9 @@ cond_general_scenario  %>%
 <!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
 <!-- ``` -->
 
-```{r add conditions general, echo=FALSE}
+## Add general conditions
+
+```{r add conditions general, echo=TRUE}
 add_general_condition <- function(dt, dt_condi) {
   for (i in 1:length(dt_condi$start_datetime) ) {
     dt[datetime >= dt_condi$start_datetime[i] & datetime <= dt_condi$end_datetime[i],
@@ -79,23 +82,49 @@ add_general_condition <- function(dt, dt_condi) {
 add_general_condition(dt_velocicalc, cond_general_scenario)
 add_general_condition(dt_innova, cond_general_scenario)
 add_general_condition(dt_wind_sensor, cond_general_scenario)
-
 ```
 
-```{r add conditions velocicalc, echo=FALSE}
+
+## Add VelociCalc conditions
+```{r add conditions velocicalc, echo=TRUE}
 dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
-                         on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on = .(test_id, s_r, loc, vc_unit) ] %>% .[!is.na(test_id)]
+                                          on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on =
+                                                                                 .(test_id, s_r, loc, vc_unit)] %>%
+  .[!is.na(test_id)]
 ```
 
-```{r add conditions innova, echo=FALSE}
-dt_innova <-cond_source_and_receptor[cond_innova_vc,
-                         on = .(test_id, s_r)][dt_innova, on = .(test_id, innova_ch) ] %>% .[!is.na(test_id)]
+
+## Add Innova conditions
+```{r add conditions innova, echo=TRUE}
+dt_innova <- cond_source_and_receptor[cond_innova_vc,
+                                      on = .(test_id, s_r)][dt_innova,
+                                                            on = .(test_id, innova_ch)] %>%
+  .[!is.na(test_id)]
 ```
 
-```{r add conditions, echo=FALSE}
 
+## Add Wind sensor conditions and calculate `u`, `v`, and `w` (need double-check)
+
+(Please check if my understanding is correct or not.)
+
+`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows.
+$$
+u = WIMWV_{<3>} * \sin(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+$$
+v = WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+$$
+w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+
+
+```{r add conditions, echo=TRUE}
 dt_wind_sensor <- cond_source_and_receptor[cond_wind_sensor,
-                         on = .(test_id, s_r, room_type)][dt_wind_sensor, on = .(test_id, wind_sensor_unit) ] %>% .[!is.na(test_id)]
+                                           on = .(test_id, s_r, room_type)][dt_wind_sensor,
+                                                                            on = .(test_id, wind_sensor_unit)] %>%
+  .[!is.na(test_id)]
+
 dt_wind_sensor[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
 dt_wind_sensor[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 dt_wind_sensor[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
@@ -117,7 +146,7 @@ dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
 
 # Raw data
 
-Please note that the `experimental ID` is relabeled according to the condition table above (the `exp_id` column).
+Please note that the `experimental ID` is relabeled according to the condition table (the `exp_id` column) in [this link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/). Among `r max(cond_general_scenario$exp_id)` `experimental IP`, some are real experimental "test", some are "ACH" decay test, and others are "trail" or "invalid" as labeled as `Test type` in the plot title.
 
 ## Innova
 
