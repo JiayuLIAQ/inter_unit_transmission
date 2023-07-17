@@ -1,23 +1,85 @@
 ---
-title: "Analysis"
+title: "reorgnize the data"
 author: "Jiayu Li"
-date: "17 July 2023"
-output:
-  html_document:
-    toc: true
-    theme: united
-runtime: shiny
+date: "2023-07-17"
+output: html_document
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 ```{r read data, include=FALSE}
 source("R/read_clean_data_without_condi.R")
 library(plotly)
 library(DT)
 library(shiny)
+```
+
+
+```{r reorgnize data every 5 minutes}
+dt_innova[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "5 minutes")]
+
+dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
+
+dt_velocicalc <-
+  dt_velocicalc[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "vel",
+    "temperature",
+    "RH"
+  ), by = .(datetime, vc_unit, s_r, loc, equip_unit)]
+
+dt_wind_sensor <-
+  dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "vel_mag_WIMDA_19",
+    "vel_mag_WIMWV_3",
+    "vel_angle_WIMDA_13",
+    "vel_angle_WIMWV_1",
+    "temp_WIMDA_5",
+    "rh_WIMDA_9"
+  ), by = .(datetime, wind_sensor_unit)]
+```
+
+
+```{r write out raw without conditions}
+# make them wide
+dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
+dt_innova <- dt_innova[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc")
+
+dt_wind_sensor[, wind_sensor_unit := paste0("from_Station_", wind_sensor_unit)]
+dt_wind_sensor <- dt_wind_sensor %>% dcast(datetime~wind_sensor_unit, value.var = c("vel_mag_WIMDA_19",
+                                                                                    "vel_mag_WIMWV_3",
+                                                                                    "vel_angle_WIMDA_13",
+                                                                                    "vel_angle_WIMWV_1",
+                                                                                    "temp_WIMDA_5",
+                                                                                    "rh_WIMDA_9")#,fun.aggregate = mean
+)
+
+dt_velocicalc <-
+  dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
+
+
+dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
+
+n_tables <- unique(date(dt_wide_all$datetime) ) %>% length
+table_names <- unique(format(dt_wide_all$datetime, format = "%B_%d") )
+
+# class(test)
+for(i in 1:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 13:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_2.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 20:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_3.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
 ```
 
 
@@ -142,183 +204,4 @@ dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
 
 ```
 
-
-# Raw data
-
-Please note that the `experimental ID` is relabeled according to the condition table (the `exp_id` column) in [this link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/). Among `r max(cond_general_scenario$exp_id)` `experimental IP`, some are real experimental "test", some are "ACH" decay test, and others are "trail" or "invalid" as labeled as `Test type` in the plot title.
-
-## Innova
-
-```{r echo=FALSE}
-df <- dt_innova
-
-ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
-      selectInput('variable', 'Select Parameter', c('sf6_conc')),
-      checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
-    ),
-
-    mainPanel(
-      plotlyOutput("timeseriesPlot")
-    )
-  )
-)
-
-# Define server logic for timeseries plot
-server_1 <- function(input, output) {
-  output$timeseriesPlot <- renderPlotly({
-
-    filteredData <- copy(df)[exp_id == input$exp_id]
-    
-    filteredData[s_r == "s", s_r := "Source"]
-    filteredData[s_r == "r", s_r := "Receptor"]
-    
-    plot_ly(
-      filteredData,
-      x = ~ datetime,
-      y = ~ get(input$variable),
-      color = ~ paste(s_r, loc),
-      type = 'scatter',
-      mode = 'lines'
-    ) %>%
-      layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
-          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
-          # "Building type: ", filteredData$building_type %>% unique
-          ),
-        xaxis = list(title = 'Time'),
-        yaxis = list(
-          title = input$variable,
-          type = ifelse(input$log, "log", "linear")
-        )
-      )
-  })
-}
-
-# Run the app
-shinyApp(ui = ui_1, server = server_1)
-```
-
-
-## VelociCalc
-```{r echo=FALSE}
-df_2 <- dt_velocicalc
-
-ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_2$exp_id)), selected = 13),
-      selectInput('variable', 'Select Parameter', c('vel','temperature',"RH"))
-    ),
-
-    mainPanel(
-      plotlyOutput("timeseriesPlot")
-    )
-  )
-)
-
-# Define server logic for timeseries plot
-server_1 <- function(input, output) {
-  output$timeseriesPlot <- renderPlotly({
-
-    filteredData <- copy(df_2)[exp_id == input$exp_id]
-    
-    filteredData[s_r == "s", s_r := "Source"]
-    filteredData[s_r == "r", s_r := "Receptor"]
-    
-    plot_ly(
-      filteredData,
-      x = ~ datetime,
-      y = ~ get(input$variable),
-      color = ~ paste(s_r, loc),
-      type = 'scatter',
-      mode = 'lines'
-    ) %>%
-      layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
-          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
-          # "Building type: ", filteredData$building_type %>% unique
-          ),
-        xaxis = list(title = 'Time'),
-        yaxis = list(
-          title = input$variable
-        )
-      )
-  })
-}
-
-# Run the app
-shinyApp(ui = ui_1, server = server_1)
-```
-
-
-## Wind sensor
-```{r echo=FALSE}
-df_3 <- dt_wind_sensor
-
-ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_3$exp_id)), selected = 13),
-      selectInput('variable', 'Select Parameter', c('u','v',"w"))
-    ),
-
-    mainPanel(
-      plotlyOutput("timeseriesPlot")
-    )
-  )
-)
-
-# Define server logic for timeseries plot
-server_1 <- function(input, output) {
-  output$timeseriesPlot <- renderPlotly({
-
-    filteredData <- copy(df_3)[exp_id == input$exp_id]
-    
-    filteredData[s_r == "s", s_r := "Source"]
-    filteredData[s_r == "r", s_r := "Receptor"]
-    
-    plot_ly(
-      filteredData,
-      x = ~ datetime,
-      y = ~ get(input$variable),
-      color = ~ paste(s_r, loc, room_type),
-      type = 'scatter',
-      mode = 'lines'
-    ) %>%
-      layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
-          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
-          # "Building type: ", filteredData$building_type %>% unique
-          ),
-        xaxis = list(title = 'Time'),
-        yaxis = list(
-          title = input$variable
-        )
-      )
-  })
-}
-
-# Run the app
-shinyApp(ui = ui_1, server = server_1)
-```
-
-```{r eval=FALSE, include=FALSE}
-
-dt_innova[hour(datetime) %in% c(9:14), dn := "Daytime"]
-dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
-dt_innova %>% setorder(datetime)
-dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
-
-library(ggplot2)
-dt_innova[time_index > 5 & test_type == "Test" & !is.na(dn)] %>% ggplot() +
-  geom_boxplot(aes(paste(exp_id),  sf6_conc, color = dn)) +
-  scale_y_log10()
-
-```
 
