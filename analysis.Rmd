@@ -20,7 +20,6 @@ library(DT)
 library(shiny)
 ```
 
-
 ```{r read condition files, echo=FALSE}
 cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
 cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
@@ -35,30 +34,49 @@ cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
 ```
 
 # Conditions
+
 <!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE} -->
+
 <!-- cond_general_scenario[, note := iconv(note, to = "utf-8")] -->
+
 <!-- copy(cond_general_scenario)  %>%  -->
+
 <!--   .[, start_datetime := start_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+
 <!--    .[, end_datetime := end_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+
 <!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString") -->
+
 <!-- ``` -->
 
 <!-- ## Innova conditions -->
+
 <!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+
 <!--     cond_innova_vc %>% -->
+
 <!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+
 <!-- ``` -->
 
 <!-- ## Source and receptor conditions -->
+
 <!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+
 <!--     cond_source_and_receptor%>% -->
+
 <!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+
 <!-- ``` -->
 
 <!-- ## Wind sensor conditions -->
+
 <!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
+
 <!--     cond_wind_sensor %>% -->
+
 <!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
+
 <!-- ``` -->
 
 ## Add general conditions
@@ -83,8 +101,8 @@ add_general_condition(dt_innova, cond_general_scenario)
 add_general_condition(dt_wind_sensor, cond_general_scenario)
 ```
 
-
 ## Add VelociCalc conditions
+
 ```{r add conditions velocicalc, echo=TRUE}
 dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
                                           on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on =
@@ -92,8 +110,8 @@ dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
   .[!is.na(test_id)]
 ```
 
-
 ## Add Innova conditions
+
 ```{r add conditions innova, echo=TRUE}
 dt_innova <- cond_source_and_receptor[cond_innova_vc,
                                       on = .(test_id, s_r)][dt_innova,
@@ -101,40 +119,35 @@ dt_innova <- cond_source_and_receptor[cond_innova_vc,
   .[!is.na(test_id)]
 ```
 
-
 ## Add Wind sensor conditions and calculate `u`, `v`, and `w` (need double-check)
 
 (Please check if my understanding is correct or not.)
 
-`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows.
-$$
+`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows. $$
 u = WIMWV_{<3>} * \sin(\frac{WIMWV_{<1>} * \pi}{180})
-$$
-$$
+$$ $$
 v = WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
-$$
-$$
+$$ $$
 w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
 $$
 
-
 ```{r add conditions, echo=TRUE}
-dt_wind_sensor <- cond_source_and_receptor[cond_wind_sensor,
+dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
                                            on = .(test_id, s_r, room_type)][dt_wind_sensor,
                                                                             on = .(test_id, wind_sensor_unit)] %>%
   .[!is.na(test_id)]
 
-dt_wind_sensor[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
-dt_wind_sensor[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
-dt_wind_sensor[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 
 # correct test_id == 9 that "the MARKER was facing to outside of the room."
-dt_wind_sensor[test_id == 9, u := -u]
-dt_wind_sensor[test_id == 9, v := -v]
+dt_wind_sensor_ws_wd[test_id == 9, u := -u]
+dt_wind_sensor_ws_wd[test_id == 9, v := -v]
 
-cols <- names(dt_wind_sensor)[c(1:9, 12:14,21:26)]
+cols <- names(dt_wind_sensor_ws_wd)[c(1:9, 12:14,21:26)]
 
-dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
     "u",
     "v",
     "w"
@@ -142,36 +155,41 @@ dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
 
 ```
 
+<!-- # Raw data -->
 
-# Raw data
+<!-- Please note that the `experimental ID` is relabeled according to the condition table (the `exp_id` column) in [this link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/). Among `r max(cond_general_scenario$exp_id)` `experimental IP`, some are real experimental "test", some are "ACH" decay test, and others are "trail" or "invalid" as labeled as `Test type` in the plot title. -->
 
-Please note that the `experimental ID` is relabeled according to the condition table (the `exp_id` column) in [this link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/). Among `r max(cond_general_scenario$exp_id)` `experimental IP`, some are real experimental "test", some are "ACH" decay test, and others are "trail" or "invalid" as labeled as `Test type` in the plot title.
+# Innova
 
-## Innova
+## Raw data
 
 ```{r echo=FALSE}
-df <- dt_innova
+df <- dt_innova[, date := date(datetime)]
 
-ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
-      selectInput('variable', 'Select Parameter', c('sf6_conc')),
-      checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+ui_1 <- fluidPage(sidebarLayout(
+  sidebarPanel(
+    # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
+    dateInput(
+      'date',
+      'Select Date',
+      value = max(df$date),
+      min = min(df$date),
+      max = max(df$date),
+      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
     ),
-
-    mainPanel(
-      plotlyOutput("timeseriesPlot")
-    )
-  )
-)
+    selectInput('variable', 'Select Parameter', c('sf6_conc')),
+    checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+  ),
+  
+  mainPanel(plotlyOutput("timeseriesPlot"))
+))
 
 # Define server logic for timeseries plot
 server_1 <- function(input, output) {
   output$timeseriesPlot <- renderPlotly({
 
-    filteredData <- copy(df)[exp_id == input$exp_id]
+    # filteredData <- copy(df)[exp_id == input$exp_id]
+    filteredData <- copy(df)[date == input$date]
     
     filteredData[s_r == "s", s_r := "Source"]
     filteredData[s_r == "r", s_r := "Receptor"]
@@ -185,10 +203,7 @@ server_1 <- function(input, output) {
       mode = 'lines'
     ) %>%
       layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
-          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
-          # "Building type: ", filteredData$building_type %>% unique
-          ),
+        title = NULL,
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable,
@@ -202,8 +217,10 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1)
 ```
 
+# VelociCalc
 
-## VelociCalc
+## Raw data
+
 ```{r echo=FALSE}
 df_2 <- dt_velocicalc
 
@@ -255,8 +272,10 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1)
 ```
 
+# Wind sensor
 
-## Wind sensor
+## Raw data
+
 ```{r echo=FALSE}
 df_3 <- dt_wind_sensor
 
@@ -322,3 +341,119 @@ dt_innova[time_index > 5 & test_type == "Test" & !is.na(dn)] %>% ggplot() +
 
 ```
 
+## Wind rose
+
+All the calculationa and plots are based on the data from the `$WIMWV` section.
+
+```{r wind rose, echo=FALSE}
+library(openair)
+df <- dt_innova[, date := date(datetime)]
+
+# df[, datetime := datetime - hours(8)]
+ui_4 <- fluidPage(
+  sidebarLayout(
+  sidebarPanel(
+    # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
+    dateInput(
+      'date',
+      'Select Date',
+      value = max(df$date),
+      min = min(df$date),
+      max = max(df$date),
+      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+    ),
+    sliderInput(
+      "timeRange",
+      label = "Select Time Range",
+      min = as.POSIXct("9:00:00", format = "%H:%M:%S", tz = "Singapore"),
+      max = as.POSIXct("22:00:00", format = "%H:%M:%S", tz = "Singapore"),
+      value = c(
+        as.POSIXct("13:00:00", format = "%H:%M:%S", tz = "Singapore"),
+        as.POSIXct("14:00:00", format = "%H:%M:%S", tz = "Singapore")
+      ),
+      timeFormat = "%H:%M:%S"
+    )  # Time range slider
+    # sliderInput(
+    #   "timeRange",
+    #   label = "Select Time Range",
+    #   min = min(df$datetime),
+    #   max = max(df$datetime),
+    #   value = c(
+    #     min(df$datetime),
+    #     max(df$datetime)
+    #   ),
+    #   timeFormat = "%H:%M:%S"
+    # )  # Time range slider
+    
+    # selectInput('variable', 'Select Parameter', c('sf6_conc'))
+  ),
+  
+  mainPanel(plotOutput("timeseriesPlot"))
+))
+
+# Define server logic for timeseries plot
+server_4 <- function(input, output) {
+    
+  
+  output$timeseriesPlot <- renderPlot({
+# to solve the issue that wind direction cannot be averaged (seems no different)
+# dt_wind_sensor_ws_wd[, datetime := floor_date(datetime, unit = "5 minutes")]
+# 
+# dt_wind_sensor_ws_wd[, WIMDA_u := vel_mag_WIMDA_19 * sin(vel_angle_WIMDA_13 * pi/180)]
+# dt_wind_sensor_ws_wd[, WIMDA_v := vel_mag_WIMDA_19 * cos(vel_angle_WIMDA_13 * pi/180)]
+# 
+# dt_wind_sensor_ws_wd[, WIMWV_u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+# dt_wind_sensor_ws_wd[, WIMWV_v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+# 
+# 
+# dt_wind_sensor_ws_wd <-
+#   dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+#     "WIMDA_u",
+#     "WIMDA_v",
+#     "WIMWV_u",
+#     "WIMWV_v",
+#     "vel_mag_WIMDA_19",
+#     "vel_mag_WIMWV_3",
+#     "temp_WIMDA_5",
+#     "rh_WIMDA_9"
+#   ), by = .(datetime, wind_sensor_unit)]
+# 
+# dt_wind_sensor_ws_wd[, vel_angle_WIMDA_13 := (atan2(WIMDA_u, WIMDA_v) * 360/2/pi) + 180]
+# dt_wind_sensor_ws_wd[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180]
+
+# start_time <- 11
+# end_time <- 14
+
+    # df %>%
+    #   filter(as_date(datetime) == ymd(input$date), sensor == input$sensor,
+    #          hour(datetime) * 60 + minute(datetime) >= hour(input$timeRange[1]) * 60 + minute(input$timeRange[1]), 
+    #          hour(datetime) * 60 + minute(datetime) <= hour(input$timeRange[2]) * 60 + minute(input$timeRange[2])) %>%
+    #   select(datetime, input$variable, sensor)
+  
+filteredData_1 <- copy(dt_wind_sensor_ws_wd)[position == "h" &
+                                       date(datetime) == ymd(input$date) ]
+filteredData  <-  
+  filteredData_1[hour(datetime) * 60 + minute(datetime) >= hour(input$timeRange[1]) * 60 + minute(input$timeRange[1]) + 8*60] %>%
+  .[hour(datetime) * 60 + minute(datetime) <= hour(input$timeRange[2]) * 60 + minute(input$timeRange[2]) + 8*60]
+
+filteredData[, type_ := room_type]
+filteredData[s_r == "s", type_ := paste(room_type, "Source")]
+filteredData[s_r == "r", type_ := paste(room_type, "Receptor")]
+
+
+windRose(
+  mydata = filteredData,
+  ws = "vel_mag_WIMWV_3",
+  wd = "vel_angle_WIMWV_1",
+  type = "type_",
+  main = paste("For the selected date, please only select time between:",  format(min(filteredData_1$datetime), format = "%H:%M:%S"), "and", format(max(filteredData_1$datetime), format = "%H:%M:%S"))
+)
+
+# filteredData %>% ggplot() + geom_line(aes(datetime, vel_mag_WIMWV_3, color = type_))
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_4, server = server_4)
+
+```

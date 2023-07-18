@@ -53,14 +53,14 @@ ui_1 <- fluidPage(
     ),
 
     mainPanel(
-      plotlyOutput("timeseriesPlot")
+      plotOutput("timeseriesPlot")
     )
   )
 )
 
 # Define server logic for timeseries plot
 server_1 <- function(input, output) {
-  output$timeseriesPlot <- renderPlotly({
+  output$timeseriesPlot <- renderPlot({
 
     filteredData <- df %>%
       filter(date == ymd(input$date)) %>%
