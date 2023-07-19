@@ -14,10 +14,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r read data, include=FALSE}
-source("R/read_clean_data_without_condi.R")
+# source("R/funcitons.R")
+library(magrittr)
+library(data.table)
+library(lubridate)
 library(plotly)
 library(DT)
 library(shiny)
+
+dt_innova <- fread("clean_data_5_min/innova/dt_innova.csv")
+dt_velocicalc <- fread("clean_data_5_min/velocicalc/dt_velocicalc.csv")
+dt_wind_sensor <- fread("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
+
 ```
 
 ```{r read condition files, echo=FALSE}
@@ -222,13 +230,20 @@ shinyApp(ui = ui_1, server = server_1)
 ## Raw data
 
 ```{r echo=FALSE}
-df_2 <- dt_velocicalc
+df_2 <- dt_velocicalc[, date := date(datetime)]
 
 ui_1 <- fluidPage(
 
   sidebarLayout(
     sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_2$exp_id)), selected = 13),
+      dateInput(
+      'date',
+      'Select Date',
+      value = max(df$date),
+      min = min(df$date),
+      max = max(df$date),
+      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+    ),
       selectInput('variable', 'Select Parameter', c('vel','temperature',"RH"))
     ),
 
@@ -242,7 +257,7 @@ ui_1 <- fluidPage(
 server_1 <- function(input, output) {
   output$timeseriesPlot <- renderPlotly({
 
-    filteredData <- copy(df_2)[exp_id == input$exp_id]
+    filteredData <- copy(df_2)[date == input$date]
     
     filteredData[s_r == "s", s_r := "Source"]
     filteredData[s_r == "r", s_r := "Receptor"]
@@ -277,13 +292,20 @@ shinyApp(ui = ui_1, server = server_1)
 ## Raw data
 
 ```{r echo=FALSE}
-df_3 <- dt_wind_sensor
+df_3 <- dt_wind_sensor[, date := date(datetime)]
 
 ui_1 <- fluidPage(
 
   sidebarLayout(
     sidebarPanel(
-      selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df_3$exp_id)), selected = 13),
+      dateInput(
+      'date',
+      'Select Date',
+      value = max(df$date),
+      min = min(df$date),
+      max = max(df$date),
+      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+    ),
       selectInput('variable', 'Select Parameter', c('u','v',"w"))
     ),
 
@@ -297,7 +319,7 @@ ui_1 <- fluidPage(
 server_1 <- function(input, output) {
   output$timeseriesPlot <- renderPlotly({
 
-    filteredData <- copy(df_3)[exp_id == input$exp_id]
+    filteredData <- copy(df_3)[date == input$date]
     
     filteredData[s_r == "s", s_r := "Source"]
     filteredData[s_r == "r", s_r := "Receptor"]
@@ -341,7 +363,7 @@ dt_innova[time_index > 5 & test_type == "Test" & !is.na(dn)] %>% ggplot() +
 
 ```
 
-## Wind rose
+## Wind rose plots
 
 All the calculationa and plots are based on the data from the `$WIMWV` section.
 

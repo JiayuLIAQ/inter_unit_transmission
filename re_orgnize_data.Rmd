@@ -14,9 +14,9 @@ library(shiny)
 
 
 ```{r reorgnize data every 5 minutes}
-dt_innova[, datetime := floor_date(datetime, unit = "5 minutes")]
-dt_velocicalc[, datetime := floor_date(datetime, unit = "5 minutes")]
-dt_wind_sensor[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
 
 dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
 
@@ -53,6 +53,18 @@ dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180
 ```
 
 
+```{r}
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clena_data_5_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clena_data_5_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clena_data_5_min/innova/dt_innova.csv")
+
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
+
+```
+
+
 ```{r write out raw without conditions}
 # make them wide
 dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
@@ -73,10 +85,8 @@ dt_wind_sensor <-
     )#,fun.aggregate = mean
   )
 
-
 dt_velocicalc <-
   dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
-
 
 dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
 
