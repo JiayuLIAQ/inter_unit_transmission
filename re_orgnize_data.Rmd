@@ -14,9 +14,9 @@ library(shiny)
 
 
 ```{r reorgnize data every 5 minutes}
-dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
-dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
-dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
+dt_innova[, datetime := floor_date(datetime, unit = "5 minute")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "5 minute")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "5 minute")]
 
 dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
 
@@ -53,19 +53,20 @@ dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180
 ```
 
 
-```{r}
-dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clena_data_5_min/wind_sensor/dt_wind_sensor.csv")
-dt_velocicalc %>% fwrite("clena_data_5_min/velocicalc/dt_velocicalc.csv")
-dt_innova %>% fwrite("clena_data_5_min/innova/dt_innova.csv")
+```{r write out long format without conditions, eval=FALSE, include=FALSE}
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clean_data_5_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clean_data_5_min/innova/dt_innova.csv")
 
-dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
-dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
-dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
+
+# dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
+# dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
+# dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
 
 ```
 
 
-```{r write out raw without conditions}
+```{r write out wide format without conditions, eval=FALSE, include=FALSE}
 # make them wide
 dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
 dt_innova <- dt_innova[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc")
@@ -127,32 +128,8 @@ cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) ]
 cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
 ```
 
+
 # Conditions
-<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE} -->
-<!-- cond_general_scenario[, note := iconv(note, to = "utf-8")] -->
-<!-- copy(cond_general_scenario)  %>%  -->
-<!--   .[, start_datetime := start_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
-<!--    .[, end_datetime := end_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString") -->
-<!-- ``` -->
-
-<!-- ## Innova conditions -->
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-<!--     cond_innova_vc %>% -->
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-<!-- ``` -->
-
-<!-- ## Source and receptor conditions -->
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-<!--     cond_source_and_receptor%>% -->
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-<!-- ``` -->
-
-<!-- ## Wind sensor conditions -->
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-<!--     cond_wind_sensor %>% -->
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-<!-- ``` -->
 
 ## Add general conditions
 
@@ -212,27 +189,75 @@ $$
 
 
 ```{r add conditions, echo=TRUE}
-dt_wind_sensor <- cond_source_and_receptor[cond_wind_sensor,
+dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
                                            on = .(test_id, s_r, room_type)][dt_wind_sensor,
                                                                             on = .(test_id, wind_sensor_unit)] %>%
   .[!is.na(test_id)]
 
-dt_wind_sensor[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
-dt_wind_sensor[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
-dt_wind_sensor[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 
 # correct test_id == 9 that "the MARKER was facing to outside of the room."
-dt_wind_sensor[test_id == 9, u := -u]
-dt_wind_sensor[test_id == 9, v := -v]
+dt_wind_sensor_ws_wd[test_id == 9, u := -u]
+dt_wind_sensor_ws_wd[test_id == 9, v := -v]
 
-cols <- names(dt_wind_sensor)[c(1:9, 12:14,21:26)]
+cols <- names(dt_wind_sensor_ws_wd)[c(1:9, 12:14,21:26)]
 
-dt_wind_sensor <- dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
     "u",
     "v",
     "w"
   ), by = cols]
-
 ```
 
 
+
+```{r write out wide format with conditions, echo=FALSE}
+# make them wide
+# dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
+dt_innova[is.na(s_r), s_r := ""]
+dt_innova_wide <- dt_innova %>% dcast(datetime ~ paste("innova", s_r, room_type, loc, sep = "_"), value.var = "sf6_conc")
+
+dt_wind_sensor[, wind_sensor_unit := paste0("from_Station_", wind_sensor_unit)]
+
+dt_wind_sensor_ws_wd_wide <-
+  dt_wind_sensor_ws_wd %>% dcast(
+    datetime ~ paste("wind_sensor", position, s_r, room_type, sep = "_"),
+    value.var = c(
+      "vel_mag_WIMDA_19",
+      "vel_mag_WIMWV_3",
+      "vel_angle_WIMDA_13",
+      "vel_angle_WIMWV_1",
+      "temp_WIMDA_5",
+      "rh_WIMDA_9"
+    )#,fun.aggregate = mean
+  )
+
+dt_velocicalc <-
+  dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
+
+dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
+
+n_tables <- unique(date(dt_wide_all$datetime) ) %>% length
+table_names <- unique(format(dt_wide_all$datetime, format = "%B_%d") )
+
+# class(test)
+for(i in 1:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_avg_5min.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 13:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_2.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 20:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_3.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+```

@@ -1,7 +1,7 @@
 ---
 title: "Analysis"
 author: "Jiayu Li"
-date: "17 July 2023"
+date: "21 July 2023"
 output:
   html_document:
     toc: true
@@ -21,12 +21,32 @@ library(lubridate)
 library(plotly)
 library(DT)
 library(shiny)
+library(ggplot2)
+library(janitor)
 
 dt_innova <- fread("clean_data_5_min/innova/dt_innova.csv")
 dt_velocicalc <- fread("clean_data_5_min/velocicalc/dt_velocicalc.csv")
 dt_wind_sensor <- fread("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
 
+dt_innova <- dt_innova[!( datetime >= ymd_hm("2023-05-04 12:40") & datetime <= ymd_hm("2023-05-04 14:05") & innova_ch == 5)]
+
+# dt_innova[datetime >= ymd_hm("2023-05-04 12:40") & datetime <= ymd_hm("2023-05-04 14:05")]
 ```
+
+```{r themes, include=FALSE}
+
+s_r_loc_colors <- c(
+  "Receptor room"   = "#8dd3c7",
+  "Receptor window" = "#b3de69",
+  "Source room"     = "#fb8072",
+  "Source window"   = "#fdb462",
+  "Room aside the source" = "#bebada",
+  "Downstair" = "#d9d9d9"
+)
+
+```
+
+
 
 ```{r read condition files, echo=FALSE}
 cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
@@ -131,11 +151,15 @@ dt_innova <- cond_source_and_receptor[cond_innova_vc,
 
 (Please check if my understanding is correct or not.)
 
-`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows. $$
+`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows. 
+
+$$
 u = WIMWV_{<3>} * \sin(\frac{WIMWV_{<1>} * \pi}{180})
-$$ $$
+$$ 
+$$
 v = WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
-$$ $$
+$$ 
+$$
 w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
 $$
 
@@ -202,13 +226,20 @@ server_1 <- function(input, output) {
     filteredData[s_r == "s", s_r := "Source"]
     filteredData[s_r == "r", s_r := "Receptor"]
     
+    filteredData[, type_ := paste(s_r, loc)]
+    
+    filteredData[type_ %like% "downstair", type_ :="Downstair"]
+    filteredData[type_ %like% "room_aside", type_ :="Room aside the source"]
+    
     plot_ly(
       filteredData,
       x = ~ datetime,
       y = ~ get(input$variable),
-      color = ~ paste(s_r, loc),
+      color = ~ type_,
       type = 'scatter',
-      mode = 'lines'
+      mode = 'lines',
+      colors = s_r_loc_colors
+      
     ) %>%
       layout(
         title = NULL,
@@ -262,13 +293,18 @@ server_1 <- function(input, output) {
     filteredData[s_r == "s", s_r := "Source"]
     filteredData[s_r == "r", s_r := "Receptor"]
     
+    filteredData[, type_ := paste(s_r, loc)]
+    filteredData[type_ %like% "downstair", type_ :="Downstair"]
+    filteredData[type_ %like% "room_aside", type_ :="Room aside the source"]
+    
     plot_ly(
       filteredData,
       x = ~ datetime,
       y = ~ get(input$variable),
-      color = ~ paste(s_r, loc),
+      color = ~ type_,
       type = 'scatter',
-      mode = 'lines'
+      mode = 'lines',
+      colors = s_r_loc_colors
     ) %>%
       layout(
         title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
@@ -349,19 +385,6 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1)
 ```
 
-```{r eval=FALSE, include=FALSE}
-
-dt_innova[hour(datetime) %in% c(9:14), dn := "Daytime"]
-dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
-dt_innova %>% setorder(datetime)
-dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
-
-library(ggplot2)
-dt_innova[time_index > 5 & test_type == "Test" & !is.na(dn)] %>% ggplot() +
-  geom_boxplot(aes(paste(exp_id),  sf6_conc, color = dn)) +
-  scale_y_log10()
-
-```
 
 ## Wind rose plots
 
@@ -468,6 +491,8 @@ windRose(
   ws = "vel_mag_WIMWV_3",
   wd = "vel_angle_WIMWV_1",
   type = "type_",
+  breaks = c(0, 0.5, 1, 1.5, 2, 4),
+  paddle = F,
   main = paste("For the selected date, please only select time between:",  format(min(filteredData_1$datetime), format = "%H:%M:%S"), "and", format(max(filteredData_1$datetime), format = "%H:%M:%S"))
 )
 
@@ -478,4 +503,101 @@ windRose(
 # Run the app
 shinyApp(ui = ui_4, server = server_4)
 
+```
+
+# Preliminary results
+
+## `Receptor room` upon `source room` ratio 
+
+### Fixed scale
+
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
+dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
+
+dt_innova %>% setorder(datetime)
+dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
+
+p <- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>% 
+  dcast(datetime + building_type + receptor_door + dn ~ s_r, value.var = "sf6_conc") %>% 
+  .[, r_upon_s := r/s * 100] %>%
+  .[!is.na(dn)] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
+  .[building_type %like% "Flash", building_type := "Flash façade"] %>%
+  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  ylab("The SF6 concentration ratio between receptor and source rooms (%)") +
+  xlab("Scenarios") +
+  scale_color_discrete("Exp repeat ID") +
+  theme(legend.position = "top")
+
+p + facet_wrap(vars(building_type)) + coord_cartesian(ylim = c(0,35))
+```
+
+### Flexible scale
+
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+p + facet_wrap(vars(building_type), scales = "free") 
+```
+
+
+## `Downstair` upon `source room` ratio 
+
+### Fixed scale
+
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
+dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
+
+dt_innova %>% setorder(datetime)
+dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
+
+p <-
+  dt_innova[test_type == "Test" & time_index > 4 ] %>% 
+  dcast(datetime + building_type + receptor_door + dn ~ paste(s_r,loc), value.var = "sf6_conc") %>% clean_names %>% 
+  .[, r_upon_s := downstair/s_room * 100] %>%
+  .[!is.na(dn)] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
+  .[building_type %like% "Flash", building_type := "Flash façade"] %>%
+  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  ylab("The SF6 concentration ratio between downstair and source room (%)") +
+  xlab("Scenarios") +
+  scale_color_discrete("Exp repeat ID") +
+  theme(legend.position = "top")
+
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
+```
+
+### Flexible scale
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+p + facet_wrap(vars(building_type), scales = "free") 
+```
+
+## `Receptor window` upon `source room` ratio 
+### Fixed scale
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
+dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
+
+dt_innova %>% setorder(datetime)
+dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
+
+p <-
+  dt_innova[test_type == "Test" & time_index > 4 ] %>% 
+  dcast(datetime + building_type + receptor_door + dn ~ paste(s_r,loc), value.var = "sf6_conc") %>% clean_names %>% 
+  .[, r_upon_s := r_window/s_room * 100] %>%
+  .[!is.na(dn)] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
+  .[building_type %like% "Flash", building_type := "Flash façade"] %>%
+  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  ylab("The SF6 concentration ratio between receptor window and source room (%)") +
+  xlab("Scenarios") +
+  scale_color_discrete("Exp repeat ID") +
+  theme(legend.position = "top")
+
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
+```
+
+### Flexible scale
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+p + facet_wrap(vars(building_type), scales = "free") 
 ```
