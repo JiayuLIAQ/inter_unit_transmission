@@ -1,5 +1,9 @@
 # More to be added.
 
+Please check the raw data (only sorted by dates) and experimental conditions [here](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/).
+
+Please check the labelled data and preliminary results [here](https://jiayuli.shinyapps.io/analysis_inter_unit_tranmission/)
+
 ## Wind sensor 
 *`variables`: values in the user manual*
 
