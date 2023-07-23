@@ -5,7 +5,9 @@ date: "21 July 2023"
 output:
   html_document:
     toc: true
-    theme: united
+    toc_float: true
+    theme: unite
+    code_folding: hide
 runtime: shiny
 ---
 
@@ -195,26 +197,32 @@ dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols 
 
 ## Raw data
 
-```{r echo=FALSE}
+```{r echo=FALSE, out.width='100%', out.height='100%'}
 df <- dt_innova[, date := date(datetime)]
 
-ui_1 <- fluidPage(sidebarLayout(
-  sidebarPanel(
-    # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
-    dateInput(
-      'date',
-      'Select Date',
-      value = max(df$date),
-      min = min(df$date),
-      max = max(df$date),
-      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+ui_1 <- fluidPage(
+  fluidRow(
+    column(3,
+  # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
+  dateInput(
+    'date',
+    'Select Date',
+    value = max(df$date),
+    min = min(df$date),
+    max = max(df$date),
+    datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
     ),
-    selectInput('variable', 'Select Parameter', c('sf6_conc')),
-    checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+  checkboxInput('log', 'Logarithmic Scale', FALSE) 
   ),
-  
-  mainPanel(plotlyOutput("timeseriesPlot"))
-))
+  column(3,
+  selectInput('variable', 'Select Parameter', c('sf6_conc'))
+  )
+)
+,
+fluidRow(column(12,
+                mainPanel(
+                  plotlyOutput("timeseriesPlot")
+                ))))
 
 # Define server logic for timeseries plot
 server_1 <- function(input, output) {
@@ -247,13 +255,15 @@ server_1 <- function(input, output) {
         yaxis = list(
           title = input$variable,
           type = ifelse(input$log, "log", "linear")
-        )
+        ),
+        # autosize = F, 
+        width = 750, height = 500
       )
   })
 }
 
 # Run the app
-shinyApp(ui = ui_1, server = server_1)
+shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
 # VelociCalc
@@ -264,9 +274,8 @@ shinyApp(ui = ui_1, server = server_1)
 df_2 <- dt_velocicalc[, date := date(datetime)]
 
 ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(
+    column(3,
       dateInput(
       'date',
       'Select Date',
@@ -274,12 +283,17 @@ ui_1 <- fluidPage(
       min = min(df$date),
       max = max(df$date),
       datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+    )
     ),
+    column(3,
       selectInput('variable', 'Select Parameter', c('vel','temperature',"RH"))
     ),
-
+),
+  fluidRow(
+    column(12,
     mainPanel(
       plotlyOutput("timeseriesPlot")
+    )
     )
   )
 )
@@ -314,13 +328,15 @@ server_1 <- function(input, output) {
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable
-        )
+        ),
+        # autosize = F, 
+        width = 750, height = 500
       )
   })
 }
 
 # Run the app
-shinyApp(ui = ui_1, server = server_1)
+shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
 # Wind sensor
@@ -331,9 +347,7 @@ shinyApp(ui = ui_1, server = server_1)
 df_3 <- dt_wind_sensor[, date := date(datetime)]
 
 ui_1 <- fluidPage(
-
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(column(3,
       dateInput(
       'date',
       'Select Date',
@@ -341,14 +355,15 @@ ui_1 <- fluidPage(
       min = min(df$date),
       max = max(df$date),
       datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
-    ),
+    ) ),
+    column(3,
       selectInput('variable', 'Select Parameter', c('u','v',"w"))
-    ),
-
+    )),
+ fluidRow(column(12,
     mainPanel(
       plotlyOutput("timeseriesPlot")
     )
-  )
+ ))
 )
 
 # Define server logic for timeseries plot
@@ -376,13 +391,14 @@ server_1 <- function(input, output) {
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable
-        )
+        ),
+        width = 750, height = 500
       )
   })
 }
 
 # Run the app
-shinyApp(ui = ui_1, server = server_1)
+shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
 
@@ -396,8 +412,7 @@ df <- dt_innova[, date := date(datetime)]
 
 # df[, datetime := datetime - hours(8)]
 ui_4 <- fluidPage(
-  sidebarLayout(
-  sidebarPanel(
+  fluidPage(column(3,
     # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
     dateInput(
       'date',
@@ -406,7 +421,8 @@ ui_4 <- fluidPage(
       min = min(df$date),
       max = max(df$date),
       datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
-    ),
+    )),
+    column(9,
     sliderInput(
       "timeRange",
       label = "Select Time Range",
@@ -417,64 +433,19 @@ ui_4 <- fluidPage(
         as.POSIXct("14:00:00", format = "%H:%M:%S", tz = "Singapore")
       ),
       timeFormat = "%H:%M:%S"
-    )  # Time range slider
-    # sliderInput(
-    #   "timeRange",
-    #   label = "Select Time Range",
-    #   min = min(df$datetime),
-    #   max = max(df$datetime),
-    #   value = c(
-    #     min(df$datetime),
-    #     max(df$datetime)
-    #   ),
-    #   timeFormat = "%H:%M:%S"
-    # )  # Time range slider
-    
-    # selectInput('variable', 'Select Parameter', c('sf6_conc'))
-  ),
-  
-  mainPanel(plotOutput("timeseriesPlot"))
-))
+    )
+  )),
+  fluidPage(column(12,
+  mainPanel(plotOutput("timeseriesPlot", width = 700))
+  ))
+)
 
 # Define server logic for timeseries plot
 server_4 <- function(input, output) {
     
   
   output$timeseriesPlot <- renderPlot({
-# to solve the issue that wind direction cannot be averaged (seems no different)
-# dt_wind_sensor_ws_wd[, datetime := floor_date(datetime, unit = "5 minutes")]
-# 
-# dt_wind_sensor_ws_wd[, WIMDA_u := vel_mag_WIMDA_19 * sin(vel_angle_WIMDA_13 * pi/180)]
-# dt_wind_sensor_ws_wd[, WIMDA_v := vel_mag_WIMDA_19 * cos(vel_angle_WIMDA_13 * pi/180)]
-# 
-# dt_wind_sensor_ws_wd[, WIMWV_u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
-# dt_wind_sensor_ws_wd[, WIMWV_v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
-# 
-# 
-# dt_wind_sensor_ws_wd <-
-#   dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
-#     "WIMDA_u",
-#     "WIMDA_v",
-#     "WIMWV_u",
-#     "WIMWV_v",
-#     "vel_mag_WIMDA_19",
-#     "vel_mag_WIMWV_3",
-#     "temp_WIMDA_5",
-#     "rh_WIMDA_9"
-#   ), by = .(datetime, wind_sensor_unit)]
-# 
-# dt_wind_sensor_ws_wd[, vel_angle_WIMDA_13 := (atan2(WIMDA_u, WIMDA_v) * 360/2/pi) + 180]
-# dt_wind_sensor_ws_wd[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180]
 
-# start_time <- 11
-# end_time <- 14
-
-    # df %>%
-    #   filter(as_date(datetime) == ymd(input$date), sensor == input$sensor,
-    #          hour(datetime) * 60 + minute(datetime) >= hour(input$timeRange[1]) * 60 + minute(input$timeRange[1]), 
-    #          hour(datetime) * 60 + minute(datetime) <= hour(input$timeRange[2]) * 60 + minute(input$timeRange[2])) %>%
-    #   select(datetime, input$variable, sensor)
-  
 filteredData_1 <- copy(dt_wind_sensor_ws_wd)[position == "h" &
                                        date(datetime) == ymd(input$date) ]
 filteredData  <-  
@@ -501,7 +472,7 @@ windRose(
 }
 
 # Run the app
-shinyApp(ui = ui_4, server = server_4)
+shinyApp(ui = ui_4, server = server_4, options = list(height = 500) )
 
 ```
 
