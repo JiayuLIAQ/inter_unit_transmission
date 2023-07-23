@@ -49,7 +49,6 @@ s_r_loc_colors <- c(
 ```
 
 
-
 ```{r read condition files, echo=FALSE}
 cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
 cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
@@ -65,51 +64,20 @@ cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
 
 # Conditions
 
-<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE} -->
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
-<!-- cond_general_scenario[, note := iconv(note, to = "utf-8")] -->
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
 
-<!-- copy(cond_general_scenario)  %>%  -->
+copy(cond_general_scenario)  %>%
 
-<!--   .[, start_datetime := start_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+  .[, start_datetime := start_datetime - hours(8)] %>%  # this is only correcting the error in the table display
 
-<!--    .[, end_datetime := end_datetime - hours(8)] %>%  # this is only correcting the error in the table display -->
+   .[, end_datetime := end_datetime - hours(8)] %>%  # this is only correcting the error in the table display
+  .[,-c("exp_id", "test_id", "start_datetime", "end_datetime")] %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) #%>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
 
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString") -->
+```
 
-<!-- ``` -->
-
-<!-- ## Innova conditions -->
-
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-
-<!--     cond_innova_vc %>% -->
-
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-
-<!-- ``` -->
-
-<!-- ## Source and receptor conditions -->
-
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-
-<!--     cond_source_and_receptor%>% -->
-
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-
-<!-- ``` -->
-
-<!-- ## Wind sensor conditions -->
-
-<!-- ```{r echo=FALSE, message=FALSE, warning=FALSE} -->
-
-<!--     cond_wind_sensor %>% -->
-
-<!--   datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) -->
-
-<!-- ``` -->
-
-## Add general conditions
 
 ```{r add conditions general, echo=TRUE}
 add_general_condition <- function(dt, dt_condi) {
@@ -131,16 +99,17 @@ add_general_condition(dt_innova, cond_general_scenario)
 add_general_condition(dt_wind_sensor, cond_general_scenario)
 ```
 
-## Add VelociCalc conditions
 
-```{r add conditions velocicalc, echo=TRUE}
-dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
-                                          on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on =
-                                                                                 .(test_id, s_r, loc, vc_unit)] %>%
-  .[!is.na(test_id)]
+## Innova conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+    cond_innova_vc %>%
+
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
 ```
 
-## Add Innova conditions
 
 ```{r add conditions innova, echo=TRUE}
 dt_innova <- cond_source_and_receptor[cond_innova_vc,
@@ -149,7 +118,37 @@ dt_innova <- cond_source_and_receptor[cond_innova_vc,
   .[!is.na(test_id)]
 ```
 
-## Add Wind sensor conditions and calculate `u`, `v`, and `w` (need double-check)
+
+
+## Source and receptor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+    cond_source_and_receptor%>%
+
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
+```
+
+```{r add conditions velocicalc, echo=TRUE}
+dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
+                                          on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on =
+                                                                                 .(test_id, s_r, loc, vc_unit)] %>%
+  .[!is.na(test_id)]
+```
+
+
+## Wind sensor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+    cond_wind_sensor %>%
+
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
+```
+
+### Calculate `u`, `v`, and `w` (need double-check)
 
 (Please check if my understanding is correct or not.)
 
@@ -189,13 +188,19 @@ dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols 
 
 ```
 
+
+
+
+
+
+
 <!-- # Raw data -->
 
 <!-- Please note that the `experimental ID` is relabeled according to the condition table (the `exp_id` column) in [this link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/). Among `r max(cond_general_scenario$exp_id)` `experimental IP`, some are real experimental "test", some are "ACH" decay test, and others are "trail" or "invalid" as labeled as `Test type` in the plot title. -->
 
-# Innova
+# Raw data
 
-## Raw data
+## Innova
 
 ```{r echo=FALSE, out.width='100%', out.height='100%'}
 df <- dt_innova[, date := date(datetime)]
@@ -256,6 +261,10 @@ server_1 <- function(input, output) {
           title = input$variable,
           type = ifelse(input$log, "log", "linear")
         ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1),
         # autosize = F, 
         width = 750, height = 500
       )
@@ -266,9 +275,8 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
-# VelociCalc
 
-## Raw data
+## VelociCalc
 
 ```{r echo=FALSE}
 df_2 <- dt_velocicalc[, date := date(datetime)]
@@ -329,6 +337,10 @@ server_1 <- function(input, output) {
         yaxis = list(
           title = input$variable
         ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1),
         # autosize = F, 
         width = 750, height = 500
       )
@@ -339,10 +351,10 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
-# Wind sensor
 
-## Raw data
+## Wind sensor
 
+### Line plots
 ```{r echo=FALSE}
 df_3 <- dt_wind_sensor[, date := date(datetime)]
 
@@ -392,7 +404,11 @@ server_1 <- function(input, output) {
         yaxis = list(
           title = input$variable
         ),
-        width = 750, height = 500
+        width = 750, height = 500,
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
       )
   })
 }
@@ -401,8 +417,7 @@ server_1 <- function(input, output) {
 shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
 
-
-## Wind rose plots
+### Wind rose plots
 
 All the calculationa and plots are based on the data from the `$WIMWV` section.
 
@@ -476,7 +491,9 @@ shinyApp(ui = ui_4, server = server_4, options = list(height = 500) )
 
 ```
 
+
 # Preliminary results
+
 
 ## `Receptor room` upon `source room` ratio 
 
