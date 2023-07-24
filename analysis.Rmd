@@ -287,10 +287,10 @@ ui_1 <- fluidPage(
       dateInput(
       'date',
       'Select Date',
-      value = max(df$date),
-      min = min(df$date),
-      max = max(df$date),
-      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+      value = max(df_2$date),
+      min = min(df_2$date),
+      max = max(df_2$date),
+      datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date
     )
     ),
     column(3,
@@ -316,8 +316,6 @@ server_1 <- function(input, output) {
     filteredData[s_r == "r", s_r := "Receptor"]
     
     filteredData[, type_ := paste(s_r, loc)]
-    filteredData[type_ %like% "downstair", type_ :="Downstair"]
-    filteredData[type_ %like% "room_aside", type_ :="Room aside the source"]
     
     plot_ly(
       filteredData,
@@ -329,10 +327,10 @@ server_1 <- function(input, output) {
       colors = s_r_loc_colors
     ) %>%
       layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
+        title = NULL#,"\n", 
           # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
           # "Building type: ", filteredData$building_type %>% unique
-          ),
+          ,
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable
@@ -363,10 +361,10 @@ ui_1 <- fluidPage(
       dateInput(
       'date',
       'Select Date',
-      value = max(df$date),
-      min = min(df$date),
-      max = max(df$date),
-      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+      value = max(df_3$date),
+      min = min(df_3$date),
+      max = max(df_3$date),
+      datesdisabled = setdiff(seq.Date(min(df_3$date), max(df_3$date), by = "day"), df_3$date %>% unique) %>% as_date
     ) ),
     column(3,
       selectInput('variable', 'Select Parameter', c('u','v',"w"))
@@ -396,10 +394,10 @@ server_1 <- function(input, output) {
       mode = 'lines'
     ) %>%
       layout(
-        title = paste0("Test type: ", filteredData$test_type%>% unique#,"\n", 
+        title = NULL#,"\n", 
           # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
           # "Building type: ", filteredData$building_type %>% unique
-          ),
+          ,
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable
@@ -423,19 +421,19 @@ All the calculationa and plots are based on the data from the `$WIMWV` section.
 
 ```{r wind rose, echo=FALSE}
 library(openair)
-df <- dt_innova[, date := date(datetime)]
+dt_wind_sensor_ws_wd[, date := date(datetime)]
 
-# df[, datetime := datetime - hours(8)]
+# dt_wind_sensor_ws_wd[, datetime := datetime - hours(8)]
 ui_4 <- fluidPage(
   fluidPage(column(3,
-    # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(df$exp_id)), selected = 13),
+    # selectInput('exp_id', 'Select experiment ID', choices = sort(unique(dt_wind_sensor_ws_wd$exp_id)), selected = 13),
     dateInput(
       'date',
       'Select Date',
-      value = max(df$date),
-      min = min(df$date),
-      max = max(df$date),
-      datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date
+      value = max(dt_wind_sensor_ws_wd$date),
+      min = min(dt_wind_sensor_ws_wd$date),
+      max = max(dt_wind_sensor_ws_wd$date),
+      datesdisabled = setdiff(seq.Date(min(dt_wind_sensor_ws_wd$date), max(dt_wind_sensor_ws_wd$date), by = "day"), dt_wind_sensor_ws_wd$date %>% unique) %>% as_date
     )),
     column(9,
     sliderInput(
@@ -497,7 +495,7 @@ shinyApp(ui = ui_4, server = server_4, options = list(height = 500) )
 
 ## `Receptor room` upon `source room` ratio 
 
-### Fixed scale
+### Fixed scale (at 1%)
 
 ```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
@@ -518,11 +516,15 @@ p <- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>%
   scale_color_discrete("Exp repeat ID") +
   theme(legend.position = "top")
 
-p + facet_wrap(vars(building_type)) + coord_cartesian(ylim = c(0,35))
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
+```
+
+### Fixed scale (at 35%, the global max)
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
 ### Flexible scale
-
 ```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 p + facet_wrap(vars(building_type), scales = "free") 
 ```
@@ -530,7 +532,7 @@ p + facet_wrap(vars(building_type), scales = "free")
 
 ## `Downstair` upon `source room` ratio 
 
-### Fixed scale
+### Fixed scale (at 1%)
 
 ```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
@@ -552,6 +554,11 @@ p <-
   scale_color_discrete("Exp repeat ID") +
   theme(legend.position = "top")
 
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
+```
+
+### Fixed scale (at 35%, the global max)
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
@@ -561,7 +568,7 @@ p + facet_wrap(vars(building_type), scales = "free")
 ```
 
 ## `Receptor window` upon `source room` ratio 
-### Fixed scale
+### Fixed scale (at 1%)
 ```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
 dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
@@ -582,10 +589,175 @@ p <-
   scale_color_discrete("Exp repeat ID") +
   theme(legend.position = "top")
 
+p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
+```
+
+### Fixed scale (at 35%, the global max)
+```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
 ### Flexible scale
 ```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
 p + facet_wrap(vars(building_type), scales = "free") 
+```
+
+
+## Time-resolved transmission rate
+
+```{r echo=FALSE}
+df_4 <- dt_innova[, date := date(datetime)]
+
+ui_1 <- fluidPage(
+  fluidRow(
+    column(3,
+      dateInput(
+      'date',
+      'Select Date',
+      value = max(df$date),
+      min = min(df$date),
+      max = max(df$date),
+      datesdisabled = setdiff(seq.Date(min(df_4$date), max(df_4$date), by = "day"), df_4$date %>% unique) %>% as_date
+    )
+    ),
+    column(9,
+    sliderInput(
+      "timeRange",
+      label = "Select Time Range",
+      min = as.POSIXct("9:00:00", format = "%H:%M:%S", tz = "Singapore"),
+      max = as.POSIXct("22:00:00", format = "%H:%M:%S", tz = "Singapore"),
+      value = c(
+        as.POSIXct("10:00:00", format = "%H:%M:%S", tz = "Singapore"),
+        as.POSIXct("21:00:00", format = "%H:%M:%S", tz = "Singapore")
+      ),
+      timeFormat = "%H:%M:%S"
+    )
+  )),
+  fluidRow(
+    column(12,
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    
+filteredData <- copy(df_4)[date == input$date] %>% 
+  .[hour(datetime) * 60 + minute(datetime) >= hour(input$timeRange[1]) * 60 + minute(input$timeRange[1]) + 8*60] %>%
+  .[hour(datetime) * 60 + minute(datetime) <= hour(input$timeRange[2]) * 60 + minute(input$timeRange[2]) + 8*60] %>%
+  dcast(datetime + building_type + receptor_door ~ paste(s_r,loc), value.var = "sf6_conc") %>% clean_names %>% 
+  .[, r_room_upon_s_room := r_room/s_room * 100] %>%
+  .[, r_windor_upon_s_room := r_window/s_room * 100] %>%
+  .[, downstair_upon_s_room := downstair/s_room * 100] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door)] %>% 
+  melt(id.vars = c("datetime", "building_type", "receptor_door", "repeats"), 
+       measure.vars = c("r_room_upon_s_room", "r_windor_upon_s_room", "downstair_upon_s_room"))
+
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ value,
+      color = ~ variable,
+      type = 'scatter',
+      mode = 'lines' #,
+      # colors = s_r_loc_colors
+    ) %>%
+      layout(
+        title = NULL#,"\n", 
+          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
+          # "Building type: ", filteredData$building_type %>% unique
+          ,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = "The SF6 concentration ratio between different locations and source room (%)"
+         ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1),
+        # autosize = F, 
+        width = 700, height = 500
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
+```
+
+
+## Temperature differences
+
+$$ \Delta T = Temperature_{window} - Temperature_{room} $$ 
+```{r}
+df_5 <- dt_velocicalc[, date := date(datetime)]
+
+ui_1 <- fluidPage(
+  fluidRow(
+    column(3,
+      dateInput(
+      'date',
+      'Select Date',
+      value = max(df_5$date),
+      min = min(df_5$date),
+      max = max(df_5$date),
+      datesdisabled = setdiff(seq.Date(min(df_5$date), max(df_5$date), by = "day"), df_5$date %>% unique) %>% as_date
+    )
+    ),
+),
+  fluidRow(
+    column(12,
+    mainPanel(
+      plotlyOutput("timeseriesPlot")
+    )
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- copy(df_5)[date == input$date] %>%
+      dcast(datetime + date + s_r + test_type + receptor_door ~  loc, value.var = "temperature") %>%
+      .[, delta_t := window - room] %>%
+      .[s_r == "s", s_r := "Source"] %>%
+      .[s_r == "r", s_r := "Receptor"]
+    
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ delta_t,
+      color = ~ s_r,
+      type = 'scatter',
+      mode = 'lines' #,
+      # colors = s_r_loc_colors
+    ) %>%
+      layout(
+        title = NULL#,"\n", 
+          # "Receptor door: ", filteredData$receptor_door %>% unique ,"\n", 
+          # "Building type: ", filteredData$building_type %>% unique
+          ,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1),
+        # autosize = F, 
+        width = 750, height = 500
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1, options = list(height = 650) )
 ```
