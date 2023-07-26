@@ -4,7 +4,7 @@ path_txt <- data.table(path = list.files(no.. = FALSE, full.names = TRUE, recurs
                                          pattern = "\\.TXT$"))
 
 
-dt_wind_sensor <- map(path_txt[path %like% "Air study_93 Henderson Road"]$path, read_wind_sensor) %>% rbindlist 
+dt_wind_sensor <- map(path_txt[path %like% "wind sensor_25 Jul"]$path, read_wind_sensor) %>% rbindlist 
 
 dt_wind_sensor <- dt_wind_sensor[,-c("path")] %>% unique # %>% fwrite("data/dt_wind_sensor_raw.csv")
 dt_wind_sensor %>% fwrite("clean_data/wind_sensor/dt_wind_sensor_raw.csv")

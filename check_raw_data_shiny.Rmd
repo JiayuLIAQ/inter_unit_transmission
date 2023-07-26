@@ -32,6 +32,11 @@ cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
 # cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
 ```
 
+<!-- ```{r eval=FALSE, include=FALSE} -->
+<!-- dt_velocicalc %>% setorder(datetime) -->
+<!-- dt_innova %>% setorder(datetime) -->
+<!-- dt_wind_sensor %>% setorder(datetime) -->
+<!-- ``` -->
 
 # Raw data
 ## Innova
@@ -199,7 +204,7 @@ server <- function(input, output) {
     "w"
   ), by = .(datetime,sensor_tree,date)] %>%
       filter(date == ymd(input$date)) %>%
-      select(datetime, input$variable_2, sensor_tree)
+      select(datetime, input$variable_2, sensor_tree) 
       
       
   plot_ly(

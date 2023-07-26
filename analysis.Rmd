@@ -46,6 +46,7 @@ s_r_loc_colors <- c(
   "Downstair" = "#d9d9d9"
 )
 
+nea_colors <- c("#BED73B","#58B6DC", "#F58A06")
 ```
 
 
@@ -167,8 +168,8 @@ $$
 ```{r add conditions, echo=TRUE}
 dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
                                            on = .(test_id, s_r, room_type)][dt_wind_sensor,
-                                                                            on = .(test_id, wind_sensor_unit)] %>%
-  .[!is.na(test_id)]
+                                                                            on = .(test_id, wind_sensor_unit)] #%>%
+  # .[!is.na(test_id)]
 
 dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
 dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
@@ -497,35 +498,39 @@ shinyApp(ui = ui_4, server = server_4, options = list(height = 500) )
 
 ### Fixed scale (at 1%)
 
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
 dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
 
 dt_innova %>% setorder(datetime)
 dt_innova[, time_index := seq.int(1:.N), by = .(exp_id, innova_ch)]
 
-p <- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>% 
-  dcast(datetime + building_type + receptor_door + dn ~ s_r, value.var = "sf6_conc") %>% 
+p <- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>%
+  dcast(datetime + building_type + receptor_door + dn ~ s_r, value.var = "sf6_conc") %>%
   .[, r_upon_s := r/s * 100] %>%
   .[!is.na(dn)] %>%
   .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
   .[building_type %like% "Flash", building_type := "Flash façade"] %>%
-  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  ggplot( aes(paste0("Door ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  geom_boxplot( ) +
+  stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between receptor and source rooms (%)") +
   xlab("Scenarios") +
-  scale_color_discrete("Exp repeat ID") +
-  theme(legend.position = "top")
+  scale_color_manual("Exp repeat ID", values = nea_colors) +
+  theme(legend.position = "top") #+
+  # theme_classic()
 
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
+
 ```
 
 ### Fixed scale (at 35%, the global max)
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
 ### Flexible scale
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type), scales = "free") 
 ```
 
@@ -534,7 +539,7 @@ p + facet_wrap(vars(building_type), scales = "free")
 
 ### Fixed scale (at 1%)
 
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
 dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
 
@@ -548,28 +553,31 @@ p <-
   .[!is.na(dn)] %>%
   .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
   .[building_type %like% "Flash", building_type := "Flash façade"] %>%
-  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+   ggplot( aes(paste0("Door ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  geom_boxplot( ) +
+  stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between downstair and source room (%)") +
   xlab("Scenarios") +
-  scale_color_discrete("Exp repeat ID") +
-  theme(legend.position = "top")
+  scale_color_manual("Exp repeat ID", values = nea_colors) +
+  theme(legend.position = "top") #+
+  # theme_classic()
 
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
 ```
 
 ### Fixed scale (at 35%, the global max)
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
 ### Flexible scale
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type), scales = "free") 
 ```
 
 ## `Receptor window` upon `source room` ratio 
 ### Fixed scale (at 1%)
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 dt_innova[hour(datetime) %in% c(12:14), dn := "Daytime"]
 dt_innova[hour(datetime) %in% c(18:20), dn := "Nighttime"]
 
@@ -583,24 +591,113 @@ p <-
   .[!is.na(dn)] %>%
   .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
   .[building_type %like% "Flash", building_type := "Flash façade"] %>%
-  ggplot() + geom_boxplot(aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+   ggplot( aes(paste0("Door ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +
+  geom_boxplot( ) +
+  stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between receptor window and source room (%)") +
   xlab("Scenarios") +
-  scale_color_discrete("Exp repeat ID") +
-  theme(legend.position = "top")
+  scale_color_manual("Exp repeat ID", values = nea_colors) +
+  theme(legend.position = "top") #+
+  # theme_classic()
 
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,1))
 ```
 
 ### Fixed scale (at 35%, the global max)
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type))+ coord_cartesian(ylim = c(0,35))
 ```
 
 ### Flexible scale
-```{r echo=FALSE, fig.height=6, fig.width=11.5, warning=FALSE}
+```{r echo=FALSE, fig.height=5, fig.width=8, warning=FALSE}
 p + facet_wrap(vars(building_type), scales = "free") 
 ```
+
+
+## Summary table
+```{r warning=FALSE}
+dt_1 <- dt_innova[test_type == "Test" & time_index > 4 ] %>% 
+  dcast(datetime + building_type + receptor_door + dn ~ paste(s_r,loc), value.var = "sf6_conc") %>% clean_names %>%
+      .[, r_room_upon_s_room := r_room/s_room * 100] %>%
+      .[, r_window_upon_s_room := r_window/s_room * 100] %>%
+      .[, downstair_upon_s_room := downstair/s_room * 100] %>%
+  .[!is.na(dn)] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
+  .[building_type %like% "Flash", building_type := "Flash façade"] %>% 
+  .[, .(r_room_upon_s_room_mean = mean(r_room_upon_s_room, na.rm = T),
+        r_room_upon_s_room_median = median(r_room_upon_s_room, na.rm = T),
+        r_window_upon_s_room_mean = mean(r_window_upon_s_room, na.rm = T),
+        r_window_upon_s_room_median = median(r_window_upon_s_room, na.rm = T),
+        downstair_upon_s_room_mean = mean(downstair_upon_s_room, na.rm = T),
+        downstair_upon_s_room_median = median(downstair_upon_s_room, na.rm = T)) , by = .(building_type, receptor_door,dn,date = date(datetime),repeats)]
+
+dt_1 %>% datatable(rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+# DT::datatable(dt_)
+
+```
+
+
+
+```{r warning=FALSE, fig.height= 10, fig.width= 8}
+dt_2 <- dt_innova[test_type == "Test" & time_index > 4 ] %>% 
+  dcast(datetime + building_type + receptor_door + dn ~ paste(s_r,loc), value.var = "sf6_conc") %>% clean_names %>%
+      .[, r_room_upon_s_room := r_room/s_room * 100] %>%
+      .[, r_window_upon_s_room := r_window/s_room * 100] %>%
+      .[, downstair_upon_s_room := downstair/s_room * 100] %>%
+  .[!is.na(dn)] %>%
+  .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>%
+  .[building_type %like% "Flash", building_type := "Flash façade"] %>% 
+  .[, .(`Receptor room upon source room` = mean(r_room_upon_s_room, na.rm = T),
+        # r_room_upon_s_room_median = median(r_room_upon_s_room, na.rm = T),
+       `Receptor window upon source room` = mean(r_window_upon_s_room, na.rm = T),
+        # r_window_upon_s_room_median = median(r_window_upon_s_room, na.rm = T),
+        `Downstair upon source room` = mean(downstair_upon_s_room, na.rm = T)#,
+        # downstair_upon_s_room_median = median(downstair_upon_s_room, na.rm = T)
+        ) , by = .(building_type, receptor_door,dn,date = date(datetime),repeats)] 
+  
+dt_2 %>% melt(id.vars = c("building_type", "receptor_door", "dn", "date", "repeats") ) %>%
+  ggplot( aes(paste0("Door ", receptor_door, "\n", dn), value, fill = paste(repeats)) ) +
+  geom_col(position = "dodge") +
+  ylab("The SF6 concentration ratio between different locations and source room (%)") +
+  xlab("Scenarios") +
+  scale_fill_manual("Exp repeat ID", values = nea_colors) +
+  # facet_wrap(vars(building_type, variable), scales = "free") +
+  
+  facet_grid(variable~building_type) +
+  theme(legend.position = "top") 
+  
+```
+
+<!-- ```{r} -->
+
+<!-- fun_mean <- function(x) 8 -->
+<!-- fun_median <- function(x) 7 -->
+<!-- fun_mean <- function(x) 6 -->
+
+<!-- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>%  -->
+<!--   dcast(datetime + building_type + receptor_door + dn ~ s_r, value.var = "sf6_conc") %>%  -->
+<!--   .[, r_upon_s := r/s * 100] %>% -->
+<!--   .[!is.na(dn)] %>% -->
+<!--   .[, repeats := rleid(date(datetime)), by = .(building_type, receptor_door, dn)] %>% -->
+<!--   .[building_type %like% "Flash", building_type := "Flash façade"] %>% -->
+<!--   .[, R_] -->
+
+
+<!--   ggplot( aes(paste0("Receptor door: ", receptor_door, "\n", dn), r_upon_s, color = paste(repeats)) ) +  -->
+<!--   geom_boxplot( ) + -->
+<!--   # stat_summary(fun.y = "mean", geom = "text",  -->
+<!--   #              aes(label=signif(..y..,4)), position = position_dodge(0.75)) + -->
+<!--     stat_summary(fun.y = "fun_mean", fun.ymin = "mean", geom = "text",  -->
+<!--                aes(label=signif(..ymin..,2)), position = position_dodge(0.75)) + -->
+<!--       stat_summary(fun.y = "fun_median", fun.ymin = "median", geom = "text",  -->
+<!--                aes(label=signif(..ymin..,2)), position = position_dodge(0.75)) + -->
+<!--   ylab("The SF6 concentration ratio between receptor and source rooms (%)") + -->
+<!--   xlab("Scenarios") + -->
+<!--   scale_color_manual("Exp repeat ID", values = nea_colors) + -->
+<!--   theme(legend.position = "top") + -->
+<!--   theme_classic() -->
+
+<!-- ``` -->
 
 
 ## Time-resolved transmission rate
