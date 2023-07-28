@@ -166,34 +166,37 @@ w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
 $$
 
 ```{r add conditions, echo=TRUE}
+
 dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
                                            on = .(test_id, s_r, room_type)][dt_wind_sensor,
                                                                             on = .(test_id, wind_sensor_unit)] #%>%
   # .[!is.na(test_id)]
 
-dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+# dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+
+dt_wind_sensor_ws_wd[position == "h", u_from_hori_sensor := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "v", u_from_verti_sensor := - vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+
 dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 dt_wind_sensor_ws_wd[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 
 # correct test_id == 9 that "the MARKER was facing to outside of the room."
-dt_wind_sensor_ws_wd[test_id == 9, u := -u]
+# dt_wind_sensor_ws_wd[test_id == 9, u := -u]
+dt_wind_sensor_ws_wd[test_id == 9, u_from_hori_sensor := -u_from_hori_sensor]
 dt_wind_sensor_ws_wd[test_id == 9, v := -v]
+
 
 cols <- names(dt_wind_sensor_ws_wd)[c(1:9, 12:14,21:26)]
 
 dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
-    "u",
+    # "u",
+    "u_from_hori_sensor",
+    "u_from_verti_sensor",
     "v",
     "w"
   ), by = cols]
 
 ```
-
-
-
-
-
-
 
 <!-- # Raw data -->
 
@@ -368,8 +371,11 @@ ui_1 <- fluidPage(
       datesdisabled = setdiff(seq.Date(min(df_3$date), max(df_3$date), by = "day"), df_3$date %>% unique) %>% as_date
     ) ),
     column(3,
-      selectInput('variable', 'Select Parameter', c('u','v',"w"))
-    )),
+           selectInput('variable', 'Select Parameter', c(#'u',
+                                                         'u_from_hori_sensor',
+                                                         'u_from_verti_sensor',
+                                                         "v",
+                                                         "w")))), 
  fluidRow(column(12,
     mainPanel(
       plotlyOutput("timeseriesPlot")
