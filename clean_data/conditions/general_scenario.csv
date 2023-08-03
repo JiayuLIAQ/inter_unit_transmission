@@ -3,12 +3,12 @@ exp_id,test_id,exp_date,start_time,end_time,sf6_rate,building_type,scenario,note
 2,2,31-Mar-23,06:00pm,07:30pm,2.5,L-shape,"L-Shape, Night time, Door closed (No wind sensor)",It was raining from 07:30pm and thus the test was stopped.,Trial,closed
 3,3,3-Apr-23,05:00pm,09:00pm,1.5,L-shape,"L-Shape, Night time, Door closed (No wind sensor)",,Trial,closed
 4,4,6-Apr-23,12:18pm,04:00pm,1.5,L-shape,"L-Shape, Day time, Door closed (No wind sensor)",,Trial,closed
-5,4,6-Apr-23,04:00pm,04:40pm,5,L-shape,"L-Shape, Day time, Door closed (No wind sensor)","Increase flow rate to 5ml/min at 04:00pm to verify the receptor room¡¯s measurement, as the readings of receptor room were quite low.",Trial,closed
+5,4,6-Apr-23,04:00pm,04:40pm,5,L-shape,"L-Shape, Day time, Door closed (No wind sensor)","Increase flow rate to 5ml/min at 04:00pm to verify the receptor roomï¿½ï¿½s measurement, as the readings of receptor room were quite low.",Trial,closed
 6,5,21-Apr-23,11:40am,02:50pm,1.5,L-shape,"L-Shape, Day time, Door closed",R_room tubing was connected to Chanel 03 and R_window tubing was connected to Chanel 04.,Test,closed
 7,6,3-May-23,11:30am,03:00pm,1.5,L-shape,"L-Shape, Day time, Door closed",,Test,closed
-8,6,3-May-23,03:00pm,04:00pm,0,L-shape,"L-Shape, Day time, Door closed","It was raining during 03:00pm ¨C 03:30pm. The dose of gas was stopped during 03:00pm ¨C 04:00pm, and the INNOVA was continuously monitoring.",ACH,closed
+8,6,3-May-23,03:00pm,04:00pm,0,L-shape,"L-Shape, Day time, Door closed","It was raining during 03:00pm ï¿½C 03:30pm. The dose of gas was stopped during 03:00pm ï¿½C 04:00pm, and the INNOVA was continuously monitoring.",ACH,closed
 9,7,3-May-23,04:00pm,07:30pm,1.5,L-shape,"L-Shape, Day time, Door closed",,Test,closed
-10,8,4-May-23,10:30am,09:00pm,1.5,L-shape,"L-Shape, Day time, Door open; L-Shape, Night time, Door open",It was raining during 12:45pm ¨C 02:05pm. The downstair tubing was placed at inside of source room during 12:45pm to 02:05pm. The reading of Chanel 5 was representative the source room as the same as Chanel 1.,Test,open
+10,8,4-May-23,10:30am,09:00pm,1.5,L-shape,"L-Shape, Day time, Door open; L-Shape, Night time, Door open",It was raining during 12:45pm ï¿½C 02:05pm. The downstair tubing was placed at inside of source room during 12:45pm to 02:05pm. The reading of Chanel 5 was representative the source room as the same as Chanel 1.,Test,open
 11,9,10-May-23,10:30am,07:30pm,1.5,L-shape,"L-Shape, Day time, Door open; L-Shape, Night time, Door open",,Test,open
 12,9,10-May-23,07:30pm,07:45pm,0,L-shape,"L-Shape, Day time, Door open; L-Shape, Night time, Door open","Gas was finished at 07:30pm. 
 Wind sensor of living for horizontal direction was facing different with the other horizontal wind sensors, where the symbol was facing to outside of the room.",ACH,open
@@ -36,3 +36,4 @@ Wind sensor of living for horizontal direction was facing different with the oth
 34,19,26-Jun-23,09:00pm,09:30pm,0,Flash fa?ade,"Flash fa?ade, Day time, Door open;  Flash fa?ade, Night time, Door open (both bedroom windows closed)","The gas tank was located at the level 2 living room, which is the source room. The gas was dosed at 11:41am and was finished at about 01:00pm. The gas tank was replaced and the test was resumed at about 01:50pm.",ACH,open
 35,20,27-Jun-23,12:49pm,08:40pm,1.5,Flash fa?ade,"Flash fa?ade, Day time, Door open;  Flash fa?ade, Night time, Door open (both bedroom windows closed)","The gas tank was located at the level 2 living room, which is the source room. The gas was dosed at 12:30am.",Test,open
 36,20,27-Jun-23,08:40pm,09:40pm,0,Flash fa?ade,"Flash fa?ade, Day time, Door open;  Flash fa?ade, Night time, Door open (both bedroom windows closed)","The gas tank was located at the level 2 living room, which is the source room. The gas was dosed at 12:30am.",ACH,open
+37,21,1-Aug-23,12:10pm,09:30pm,1.5,L-shape,"L-Shape, Night time, Door closed",,Test,closed

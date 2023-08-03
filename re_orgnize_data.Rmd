@@ -14,9 +14,14 @@ library(shiny)
 
 
 ```{r reorgnize data every 5 minutes}
-dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
-dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
-dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
+# dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
+# dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
+# dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
+
+dt_innova[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "5 minutes")]
+
 
 dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
 
@@ -54,14 +59,14 @@ dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180
 
 
 ```{r write out long format without conditions, eval=FALSE, include=FALSE}
-dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
-dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
-dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
-
-
 # dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
 # dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
 # dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
+
+
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clean_data_5_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clean_data_5_min/innova/dt_innova.csv")
 
 ```
 

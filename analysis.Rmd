@@ -1,7 +1,7 @@
 ---
 title: "Analysis"
 author: "Jiayu Li"
-date: "21 July 2023"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
   html_document:
     toc: true
@@ -46,7 +46,7 @@ s_r_loc_colors <- c(
   "Downstair" = "#d9d9d9"
 )
 
-nea_colors <- c("#BED73B","#58B6DC", "#F58A06")
+nea_colors <- c("#BED73B","#58B6DC", "#F58A06","#bebada")
 ```
 
 
@@ -175,7 +175,7 @@ dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
 # dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
 
 dt_wind_sensor_ws_wd[position == "h", u_from_hori_sensor := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
-dt_wind_sensor_ws_wd[position == "v", u_from_verti_sensor := - vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "v", u_from_verti_sensor := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
 
 dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
 dt_wind_sensor_ws_wd[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
