@@ -58,20 +58,18 @@ cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
 df <- dt_innova[, date := date(datetime)]
 
 ui_1 <- fluidPage(
-  # titlePanel("Time Series Data Viewer"),
-
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(
+    column(3,
       dateInput('date', 'Select Date', value = max(df$date), min = min(df$date), max = max(df$date),
-                datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date),
-      # selectInput('date', 'Select Date', choices = unique(as_date(df$datetime))),
-      
-      selectInput('variable', 'Select Parameter', c('sf6_conc')),
-      checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
-   
+                datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date))
     ),
-
-    mainPanel(
+    fluidRow(
+    column(3,
+      # selectInput('variable', 'Select Parameter', c('sf6_conc')),
+      checkboxInput('log', 'Logarithmic Scale', FALSE) )  # Checkbox for logarithmic scale
+    ),
+  fluidRow(
+    column(10,
       plotlyOutput("timeseriesPlot")
     )
   )
@@ -83,29 +81,33 @@ server_1 <- function(input, output) {
 
     filteredData <- df %>%
       filter(date == ymd(input$date)) %>%
-      select(datetime, input$variable, innova_ch)
+      select(datetime, sf6_conc, innova_ch)
 
     plot_ly(
       filteredData,
       x = ~ datetime,
-      y = ~ get(input$variable),
+      y = ~ sf6_conc,
       color = ~ paste("Ch.", innova_ch),
       type = 'scatter',
       mode = 'lines'
     ) %>%
       layout(
-        title = paste(input$variable, 'on', input$date),
+        title = NULL,
         xaxis = list(title = 'Time'),
         yaxis = list(
-          title = input$variable,
-          type = ifelse(input$log, "log", "linear")
-        )
+          title = "SF6 concentration (ppm)",
+          type = ifelse(input$log, "log", "linear")),
+          legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
+        
       )
   })
 }
 
 # Run the app
-shinyApp(ui = ui_1, server = server_1)
+shinyApp(ui = ui_1, server = server_1, options = list(height = 560) )
 ```
 
 ## VelociCalc
@@ -115,20 +117,21 @@ df_2 <- dt_velocicalc[, date := date(datetime)]
 ui_2 <- fluidPage(
   # titlePanel("Time Series Data Viewer"),
 
-  sidebarLayout(
-    sidebarPanel(
+  fluidRow(
+    column(3,
       dateInput('date', 'Select Date', value = max(df_2$date), min = min(df_2$date), max = max(df_2$date),
-                datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date),
-      
+                datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date)
+      ),
+    column(3,
       selectInput('variable', 'Select Parameter', c('vel', 'temperature','RH')) #,
       # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
-   
+    )
     ),
 
-    mainPanel(
+  fluidRow(
+    column(10,
       plotlyOutput("timeseriesPlot")
-    )
-  )
+    ))
 )
 
 # Define server logic for timeseries plot
@@ -148,19 +151,23 @@ server_2 <- function(input, output) {
       mode = 'lines'
     ) %>%
       layout(
-        title = paste(input$variable, 'on', input$date),
+        title = NULL,
         xaxis = list(title = 'Time'),
         yaxis = list(
           title = input$variable#,
           # type = ifelse(input$log, "log", "linear")
-        )
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
       )
 
   })
 }
 
 # Run the app
-shinyApp(ui = ui_2, server = server_2)
+shinyApp(ui = ui_2, server = server_2, options = list(height = 550) )
 ```
 
 ## Wind Sensor
@@ -261,7 +268,11 @@ server <- function(input, output) {
         yaxis = list(
           title = input$variable_2#,
           # type = ifelse(input$log, "log", "linear")
-        )
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
       )
 
   })
@@ -288,7 +299,11 @@ server <- function(input, output) {
         yaxis = list(
           title = input$variable#,
           # type = ifelse(input$log, "log", "linear")
-        )
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
       )
 
   })
