@@ -1,11 +1,11 @@
 source("R/functions.R")
 # innova ----------------
-dt_innova <- fread("clean_data/innova/innova_raw.csv") %>% .[path %like% "Air study_93 Henderson Road"]
+dt_innova <- fread(here("clean_data/innova/innova_raw.csv")) %>% .[path %like% "Air study_93 Henderson Road"]
 dt_innova[, innova_ch := as.numeric(str_sub(table_name, start = -2L, end = -1L))]
 
 # dt_innova[, datetime := round_date(datetime, unit = "minute")]
 # wind sensor ----------------
-dt_wind_sensor <- fread("clean_data/wind_sensor/dt_wind_sensor_raw.csv", colClasses = list(character=c("GPGGA_1","GPZDA_1")))
+dt_wind_sensor <- fread(here("clean_data/wind_sensor/dt_wind_sensor_raw.csv"), colClasses = list(character=c("GPGGA_1","GPZDA_1")))
 
 dt_wind_sensor[, datetime := ymd_hms(paste(GPZDA_4, GPZDA_3, GPZDA_2, 
                                            str_sub(GPZDA_1, start = 1, end = 2),
