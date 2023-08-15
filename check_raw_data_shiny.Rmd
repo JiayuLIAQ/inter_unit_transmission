@@ -1,0 +1,350 @@
+---
+title: "Check raw data and experimental conditions"
+author: "Jiayu Li"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  rmdformats::readthedown:
+    toc_depth: 3
+    # toc_float:
+    #   collapsed: FALSE
+    code_folding: hide
+    # default_style: "light"
+    # downcute_theme: "chaos"
+    css: custom_wide_only.css
+runtime: shiny
+---
+
+```{r read data, include=FALSE}
+# source("R/funcitons.R")
+library(magrittr)
+library(data.table)
+library(lubridate)
+library(plotly)
+library(DT)
+library(shiny)
+library(ggplot2)
+library(janitor)
+library(tidyr)
+library(dplyr)
+library(here)
+
+dt_innova <- fread(here("clean_data_1_min/innova/dt_innova.csv"))
+dt_velocicalc <- fread(here("clean_data_1_min/velocicalc/dt_velocicalc.csv"))
+dt_wind_sensor <- fread(here("clean_data_1_min/wind_sensor/dt_wind_sensor.csv"))
+
+dt_innova <- dt_innova[!( datetime >= ymd_hm("2023-05-04 12:40") & datetime <= ymd_hm("2023-05-04 14:05") & innova_ch == 5)]
+
+# dt_innova[datetime >= ymd_hm("2023-05-04 12:40") & datetime <= ymd_hm("2023-05-04 14:05")]
+```
+
+
+```{r echo=FALSE}
+cond_general_scenario <- fread(here("clean_data/conditions/general_scenario.csv"))
+cond_innova_vc <- fread(here("clean_data/conditions/innova_vc.csv"))
+cond_source_and_receptor <- fread(here("clean_data/conditions/source_and_receptor.csv"))
+cond_wind_sensor <- fread(here("clean_data/conditions/wind_sensor.csv"))
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+```
+
+<!-- ```{r eval=FALSE, include=FALSE} -->
+<!-- dt_velocicalc %>% setorder(datetime) -->
+<!-- dt_innova %>% setorder(datetime) -->
+<!-- dt_wind_sensor %>% setorder(datetime) -->
+<!-- ``` -->
+
+# Raw data
+## Innova
+```{r echo=FALSE}
+df <- dt_innova[, date := date(datetime)]
+
+ui_1 <- fluidPage(
+  fluidRow(
+    column(3,
+      dateInput('date', 'Select Date', value = max(df$date), min = min(df$date), max = max(df$date),
+                datesdisabled = setdiff(seq.Date(min(df$date), max(df$date), by = "day"), df$date %>% unique) %>% as_date))
+    ),
+    fluidRow(
+    column(3,
+      # selectInput('variable', 'Select Parameter', c('sf6_conc')),
+      checkboxInput('log', 'Logarithmic Scale', FALSE) )  # Checkbox for logarithmic scale
+    ),
+  fluidRow(
+    column(10,
+      plotlyOutput("timeseriesPlot")
+    )
+  )
+)
+
+# Define server logic for timeseries plot
+server_1 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- df %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, sf6_conc, innova_ch)
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ sf6_conc,
+      color = ~ paste("Ch.", innova_ch),
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = NULL,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = "SF6 concentration (ppm)",
+          type = ifelse(input$log, "log", "linear")),
+          legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
+        
+      )
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_1, server = server_1, options = list(height = 560) )
+```
+
+## VelociCalc
+```{r echo=FALSE}
+df_2 <- dt_velocicalc[, date := date(datetime)]
+
+ui_2 <- fluidPage(
+  # titlePanel("Time Series Data Viewer"),
+
+  fluidRow(
+    column(3,
+      dateInput('date', 'Select Date', value = max(df_2$date), min = min(df_2$date), max = max(df_2$date),
+                datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date)
+      ),
+    column(3,
+      selectInput('variable', 'Select Parameter', c('vel', 'temperature','RH')) #,
+      # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+    )
+    ),
+
+  fluidRow(
+    column(10,
+      plotlyOutput("timeseriesPlot")
+    ))
+)
+
+# Define server logic for timeseries plot
+server_2 <- function(input, output) {
+  output$timeseriesPlot <- renderPlotly({
+
+    filteredData <- df_2 %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable, equip_unit)
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ equip_unit,
+      type = 'scatter',
+      mode = 'lines'
+    ) %>%
+      layout(
+        title = NULL,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable#,
+          # type = ifelse(input$log, "log", "linear")
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
+      )
+
+  })
+}
+
+# Run the app
+shinyApp(ui = ui_2, server = server_2, options = list(height = 550) )
+```
+
+## Wind Sensor
+
+### Calculate `u`, `v`, and `w` (need double-check)
+
+(Please check if my understanding is correct or not.)
+
+`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows. 
+
+$$
+u = WIMWV_{<3>} * \sin(\frac{WIMWV_{<1>} * \pi}{180})
+$$ 
+$$
+v = WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$ 
+$$
+w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+
+
+```{r echo=FALSE}
+wind_sensor_loc <- cond_wind_sensor[,c("wind_sensor_unit","position")] %>% unique 
+
+df_3 <- wind_sensor_loc[dt_wind_sensor, 
+                on = .(wind_sensor_unit)][wind_sensor_unit %in% c(12,10), 
+                                          sensor_tree := "1: 12(h); 10(v)"][wind_sensor_unit %in% c(5,7), 
+                                          sensor_tree := "2: 5(h); 7(v)"][wind_sensor_unit %in% c(11,1), 
+                                          sensor_tree := "3: 11(h); 1(v)"][, date := date(datetime)]
+
+# df_3[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "h", u_from_horizontal_sensor := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "v", u_from_vertical_sensor := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+df_3[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+
+ui <- fluidPage(
+
+  fluidRow(column(4,
+      dateInput('date', 'Select Date', value = max(df_3$date), min = min(df_3$date), max = max(df_3$date),
+                datesdisabled = setdiff(seq.Date(min(df_3$date), max(df_3$date), by = "day"), df_3$date %>% unique) %>% as_date),
+      titlePanel("Very raw data"),
+      selectInput('variable', 'Select Parameter', c('vel_mag_WIMWV_3', 
+                                                    'vel_mag_WIMDA_19', 
+                                                    'vel_angle_WIMWV_1',
+                                                    'vel_angle_WIMDA_13',
+                                                    'temp_WIMDA_5',
+                                                    'rh_WIMDA_9'))
+      # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
+   
+    )),
+
+    fluidRow(column(12,
+                          plotlyOutput("timeseriesPlot_1")
+    )),
+  fluidRow(column(12, titlePanel("The three velocity components"))),
+  fluidRow(column(4,
+                  selectInput(
+                    'variable_2', 'Select Parameter', c(#'u',
+                                                        'u_from_horizontal_sensor',
+                                                        'u_from_vertical_sensor',
+                                                        'v',
+                                                        'w')
+                  ))), 
+      fluidRow(column(12,
+                          plotlyOutput("timeseriesPlot_2")
+    ))
+    )
+
+
+# Define server logic for timeseries plot
+server <- function(input, output) {
+  output$timeseriesPlot_2 <- renderPlotly({
+
+    filteredData <- copy(df_3) %>% .[, lapply (.SD, mean, na.rm = T), .SDcols = c(#'u',
+                                                        'u_from_horizontal_sensor',
+                                                        'u_from_vertical_sensor',
+                                                        'v',
+                                                        'w'), by = .(datetime,sensor_tree,date)] %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable_2, sensor_tree) %>%
+  setorder(sensor_tree, datetime) %>%
+  drop_na(c(input$variable_2)) 
+      
+      
+  plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable_2),
+      color = ~ paste("Tree",sensor_tree),
+      # type = 'scatter',
+      mode = 'lines+markers'
+    ) %>%
+      layout(
+        title = NULL,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable_2#,
+          # type = ifelse(input$log, "log", "linear")
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
+      )
+
+  })
+  
+  output$timeseriesPlot_1 <- renderPlotly({
+
+    filteredData <- copy(df_3) %>%
+      filter(date == ymd(input$date)) %>%
+      select(datetime, input$variable, wind_sensor_unit) %>%
+  setorder(datetime) %>% drop_na(c(input$variable)) 
+    
+
+    plot_ly(
+      filteredData,
+      x = ~ datetime,
+      y = ~ get(input$variable),
+      color = ~ paste("Station", wind_sensor_unit),
+      # type = 'scatter',
+      mode = 'lines+markers'
+    ) %>%
+      layout(
+        title = NULL,
+        xaxis = list(title = 'Time'),
+        yaxis = list(
+          title = input$variable#,
+          # type = ifelse(input$log, "log", "linear")
+        ),
+        legend = list(orientation = "h",   # show entries horizontally
+                     xanchor = "center",  # use center of legend as anchor
+                     x = 0.5,
+                     y = 1.1)
+      )
+
+  })
+}
+# Run the app
+shinyApp(ui = ui, server = server, options = list(height = 1200) )
+```
+
+
+
+
+# General conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+cond_general_scenario[, note := iconv(note, to = "utf-8")]
+cond_general_scenario  %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))# %>% formatDate(c("start_datetime","end_datetime"), method = "toLocaleString")
+```
+
+## Innova conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_innova_vc %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Source and receptor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_source_and_receptor%>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+## Wind sensor conditions
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+    cond_wind_sensor %>%
+  datatable( rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+
+

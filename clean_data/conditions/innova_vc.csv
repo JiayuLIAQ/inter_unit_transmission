@@ -129,3 +129,15 @@ test_id,innova_ch,vc_unit,loc,s_r
 21,3,G,window,r
 21,5,,downstair,
 21,6,,room_aside_the_source,
+22,1,O,room,s
+22,2,T,window,s
+22,4,I,room,r
+22,3,G,window,r
+22,5,,downstair,
+22,6,,room_aside_the_source,
+23,1,O,room,s
+23,2,T,window,s
+23,4,I,room,r
+23,3,G,window,r
+23,5,,downstair,
+23,6,,room_aside_the_source,

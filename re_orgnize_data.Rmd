@@ -1,0 +1,270 @@
+---
+title: "reorgnize the data"
+author: "Jiayu Li"
+date: "2023-07-17"
+output: html_document
+---
+
+```{r read data, include=FALSE}
+library(here)
+library(plotly)
+library(DT)
+library(shiny)
+
+source(here("R/read_clean_data_without_condi.R"))
+```
+
+
+```{r reorgnize data every 5 minutes}
+# dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
+# dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
+# dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
+
+dt_innova[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "5 minutes")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "5 minutes")]
+
+
+dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
+
+dt_velocicalc <-
+  dt_velocicalc[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "vel",
+    "temperature",
+    "RH"
+  ), by = .(datetime, vc_unit, s_r, loc, equip_unit)]
+
+# to solve the issue that wind direction cannot be averaged
+dt_wind_sensor[, WIMDA_u := vel_mag_WIMDA_19 * sin(vel_angle_WIMDA_13 * pi/180)]
+dt_wind_sensor[, WIMDA_v := vel_mag_WIMDA_19 * cos(vel_angle_WIMDA_13 * pi/180)]
+
+dt_wind_sensor[, WIMWV_u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor[, WIMWV_v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+
+dt_wind_sensor <-
+  dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "WIMDA_u",
+    "WIMDA_v",
+    "WIMWV_u",
+    "WIMWV_v",
+    "vel_mag_WIMDA_19",
+    "vel_mag_WIMWV_3",
+    "temp_WIMDA_5",
+    "rh_WIMDA_9"
+  ), by = .(datetime, wind_sensor_unit)]
+
+dt_wind_sensor[, vel_angle_WIMDA_13 := (atan2(WIMDA_u, WIMDA_v) * 360/2/pi) + 180]
+dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180]
+
+```
+
+
+```{r write out long format without conditions, eval=FALSE, include=FALSE}
+# dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
+# dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
+# dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
+
+
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clean_data_5_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clean_data_5_min/innova/dt_innova.csv")
+
+```
+
+
+```{r write out wide format without conditions, eval=FALSE, include=FALSE}
+# make them wide
+dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
+dt_innova <- dt_innova[, c("datetime","sf6_conc","innova_ch")] %>% dcast(datetime ~ innova_ch, value.var = "sf6_conc")
+
+dt_wind_sensor[, wind_sensor_unit := paste0("from_Station_", wind_sensor_unit)]
+
+dt_wind_sensor <-
+  dt_wind_sensor %>% dcast(
+    datetime ~ wind_sensor_unit,
+    value.var = c(
+      "vel_mag_WIMDA_19",
+      "vel_mag_WIMWV_3",
+      "vel_angle_WIMDA_13",
+      "vel_angle_WIMWV_1",
+      "temp_WIMDA_5",
+      "rh_WIMDA_9"
+    )#,fun.aggregate = mean
+  )
+
+dt_velocicalc <-
+  dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
+
+dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
+
+n_tables <- unique(date(dt_wide_all$datetime) ) %>% length
+table_names <- unique(format(dt_wide_all$datetime, format = "%B_%d") )
+
+# class(test)
+for(i in 1:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_avg_5min.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 13:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_2.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 20:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_3.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+```
+
+
+```{r read condition files, echo=FALSE}
+cond_general_scenario <- fread("clean_data/conditions/general_scenario.csv")
+cond_innova_vc <- fread("clean_data/conditions/innova_vc.csv")
+cond_source_and_receptor <- fread("clean_data/conditions/source_and_receptor.csv")
+cond_wind_sensor <- fread("clean_data/conditions/wind_sensor.csv")
+
+# cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
+# cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]
+
+cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) ]
+cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) ) ]
+```
+
+
+# Conditions
+
+## Add general conditions
+
+```{r add conditions general, echo=TRUE}
+add_general_condition <- function(dt, dt_condi) {
+  for (i in 1:length(dt_condi$start_datetime) ) {
+    dt[datetime >= dt_condi$start_datetime[i] & datetime <= dt_condi$end_datetime[i],
+       `:=`(test_id = dt_condi$test_id[i],
+            exp_id = dt_condi$exp_id[i],
+            sf6_rate = dt_condi$sf6_rate[i],
+            building_type = dt_condi$building_type[i],
+            scenario = dt_condi$scenario[i],
+            test_type = dt_condi$test_type[i],
+            receptor_door = dt_condi$receptor_door[i]
+            )]
+  }
+}
+
+add_general_condition(dt_velocicalc, cond_general_scenario)
+add_general_condition(dt_innova, cond_general_scenario)
+add_general_condition(dt_wind_sensor, cond_general_scenario)
+```
+
+
+## Add VelociCalc conditions
+```{r add conditions velocicalc, echo=TRUE}
+dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
+                                          on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc, on =
+                                                                                 .(test_id, s_r, loc, vc_unit)] %>%
+  .[!is.na(test_id)]
+```
+
+
+## Add Innova conditions
+```{r add conditions innova, echo=TRUE}
+dt_innova <- cond_source_and_receptor[cond_innova_vc,
+                                      on = .(test_id, s_r)][dt_innova,
+                                                            on = .(test_id, innova_ch)] %>%
+  .[!is.na(test_id)]
+```
+
+
+## Add Wind sensor conditions and calculate `u`, `v`, and `w` (need double-check)
+
+(Please check if my understanding is correct or not.)
+
+`u` and `v` use the data from the sensors marked "h", and `w` uses the data from the sensors marked "v". The equations for calculation `u`, `v`, and `w` are as follows.
+$$
+u = WIMWV_{<3>} * \sin(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+$$
+v = WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+$$
+w = -WIMWV_{<3>} * \cos(\frac{WIMWV_{<1>} * \pi}{180})
+$$
+
+
+```{r add conditions, echo=TRUE}
+dt_wind_sensor_ws_wd <- cond_source_and_receptor[cond_wind_sensor,
+                                           on = .(test_id, s_r, room_type)][dt_wind_sensor,
+                                                                            on = .(test_id, wind_sensor_unit)] %>%
+  .[!is.na(test_id)]
+
+dt_wind_sensor_ws_wd[position == "h", u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "h", v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor_ws_wd[position == "v", w := - vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+# correct test_id == 9 that "the MARKER was facing to outside of the room."
+dt_wind_sensor_ws_wd[test_id == 9, u := -u]
+dt_wind_sensor_ws_wd[test_id == 9, v := -v]
+
+cols <- names(dt_wind_sensor_ws_wd)[c(1:9, 12:14,21:26)]
+
+dt_wind_sensor <- dt_wind_sensor_ws_wd[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "u",
+    "v",
+    "w"
+  ), by = cols]
+```
+
+
+
+```{r write out wide format with conditions, echo=FALSE}
+# make them wide
+# dt_innova[, innova_ch := paste0("innova_ch_", innova_ch,"_sf6_ppm")]
+dt_innova[is.na(s_r), s_r := ""]
+dt_innova_wide <- dt_innova %>% dcast(datetime ~ paste("innova", s_r, room_type, loc, sep = "_"), value.var = "sf6_conc")
+
+dt_wind_sensor[, wind_sensor_unit := paste0("from_Station_", wind_sensor_unit)]
+
+dt_wind_sensor_ws_wd_wide <-
+  dt_wind_sensor_ws_wd %>% dcast(
+    datetime ~ paste("wind_sensor", position, s_r, room_type, sep = "_"),
+    value.var = c(
+      "vel_mag_WIMDA_19",
+      "vel_mag_WIMWV_3",
+      "vel_angle_WIMDA_13",
+      "vel_angle_WIMWV_1",
+      "temp_WIMDA_5",
+      "rh_WIMDA_9"
+    )#,fun.aggregate = mean
+  )
+
+dt_velocicalc <-
+  dt_velocicalc %>% dcast(datetime ~ equip_unit, value.var = c("vel","temperature","RH") )
+
+dt_wide_all <- merge(merge(dt_innova, dt_velocicalc, by = "datetime", all = T), dt_wind_sensor, all = T) #%>% as.data.frame
+
+n_tables <- unique(date(dt_wide_all$datetime) ) %>% length
+table_names <- unique(format(dt_wide_all$datetime, format = "%B_%d") )
+
+# class(test)
+for(i in 1:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_avg_5min.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 13:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_2.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+
+for(i in 20:n_tables){
+  xlsx::write.xlsx(dt_wide_all[format(datetime, format = "%B_%d") == table_names[i]],
+                   file="wide_data_3.xlsx",
+                   sheetName=table_names[i], append=TRUE, row.names=FALSE, showNA=FALSE)
+}
+```
