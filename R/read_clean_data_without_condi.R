@@ -47,9 +47,9 @@ dt_wind_sensor <- dt_wind_sensor[, c(
 
 # VelociCalc ---------------------------
 dt_velocicalc <- fread("clean_data/velocicalc/velocicalc_raw.csv") 
-dt_velocicalc[, vc_unit := str_sub(equip_unit, start = -1L, end = -1L)]
-dt_velocicalc[, loc := str_to_lower(loc)]
-dt_velocicalc[, s_r := str_to_lower(s_r)]
+# dt_velocicalc[, vc_unit := str_sub(equip_unit, start = -1L, end = -1L)]
+# dt_velocicalc[, loc := str_to_lower(loc)]
+# dt_velocicalc[, s_r := str_to_lower(s_r)]
 
 # dt_velocicalc[, datetime := round_date(datetime, unit = "minute")]
 

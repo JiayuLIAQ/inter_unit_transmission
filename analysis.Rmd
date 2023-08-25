@@ -141,6 +141,8 @@ dt_innova <- cond_source_and_receptor[cond_innova_vc,
 ```
 
 ```{r add conditions velocicalc, echo=TRUE}
+dt_velocicalc %>% setnames(old = "equip_unit", new = "vc_unit")
+
 dt_velocicalc <- cond_source_and_receptor[cond_innova_vc,
                                           on = .(test_id, s_r)][vc_unit != ""][dt_velocicalc[, `:=`(loc = NULL,
                                                                                                     s_r = NULL)], on =
@@ -308,7 +310,7 @@ ui_1 <- fluidPage(
     )
     ),
     column(3,
-      selectInput('variable', 'Select Parameter', c('vel','temperature',"RH"))
+      selectInput('variable', 'Select Parameter', c('vel','temp',"rh"))
     ),
 ),
   fluidRow(
@@ -647,7 +649,13 @@ dt_1 <- dt_innova[test_type == "Test" & time_index > 4 ] %>%
         downstair_upon_s_room_mean = mean(downstair_upon_s_room, na.rm = T),
         downstair_upon_s_room_median = median(downstair_upon_s_room, na.rm = T)) , by = .(building_type, receptor_door,dn,date = date(datetime),repeats)]
 
-dt_1 %>% datatable(rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+dt_1 %>% datatable(rownames = FALSE, filter = "top", extensions = 'Buttons', editable = TRUE, options = list(dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print'))) %>%
+    formatRound(columns=c('r_room_upon_s_room_mean',
+'r_room_upon_s_room_median',
+'r_window_upon_s_room_mean',
+'r_window_upon_s_room_median',
+'downstair_upon_s_room_mean' ,
+'downstair_upon_s_room_median'), digits=2)
 # DT::datatable(dt_)
 
 ```
@@ -845,7 +853,7 @@ server_1 <- function(input, output) {
     # 
     
     filteredData <- copy(df_5)[date == input$date] %>%
-      dcast(datetime + date + s_r + test_type + receptor_door ~  loc, value.var = "temperature") %>%
+      dcast(datetime + date + s_r + test_type + receptor_door ~  loc, value.var = "temp") %>%
       .[, delta_t := window - room] %>%
       .[s_r == "s", s_r := "Source"] %>%
       .[s_r == "r", s_r := "Receptor"]

@@ -125,7 +125,7 @@ ui_2 <- fluidPage(
                 datesdisabled = setdiff(seq.Date(min(df_2$date), max(df_2$date), by = "day"), df_2$date %>% unique) %>% as_date)
       ),
     column(3,
-      selectInput('variable', 'Select Parameter', c('vel', 'temperature','RH')) #,
+      selectInput('variable', 'Select Parameter', c('vel', 'temp','rh')) #,
       # checkboxInput('log', 'Logarithmic Scale', FALSE)  # Checkbox for logarithmic scale
     )
     ),

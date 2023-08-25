@@ -30,9 +30,9 @@ dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(dateti
 dt_velocicalc <-
   dt_velocicalc[, lapply (.SD, mean, na.rm = T), .SDcols = c(
     "vel",
-    "temperature",
-    "RH"
-  ), by = .(datetime, vc_unit, s_r, loc, equip_unit)]
+    "temp",
+    "rh"
+  ), by = .(datetime, equip_unit)]
 
 # to solve the issue that wind direction cannot be averaged
 dt_wind_sensor[, WIMDA_u := vel_mag_WIMDA_19 * sin(vel_angle_WIMDA_13 * pi/180)]
