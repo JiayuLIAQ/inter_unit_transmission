@@ -11,11 +11,13 @@ library(plotly)
 library(DT)
 library(shiny)
 
-source(here("R/read_clean_data_without_condi.R"))
+
 ```
 
 
 ```{r reorgnize data every 5 minutes}
+
+source(here("R/read_clean_data_without_condi.R"))
 # dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
 # dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
 # dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
@@ -57,18 +59,60 @@ dt_wind_sensor <-
 dt_wind_sensor[, vel_angle_WIMDA_13 := (atan2(WIMDA_u, WIMDA_v) * 360/2/pi) + 180]
 dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180]
 
-```
-
-
-```{r write out long format without conditions, eval=FALSE, include=FALSE}
-# dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
-# dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
-# dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
-
-
+# write out long format without conditions --------
 dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_5_min/wind_sensor/dt_wind_sensor.csv")
 dt_velocicalc %>% fwrite("clean_data_5_min/velocicalc/dt_velocicalc.csv")
 dt_innova %>% fwrite("clean_data_5_min/innova/dt_innova.csv")
+
+```
+
+
+```{r reorgnize data every 1 minutes}
+
+source(here("R/read_clean_data_without_condi.R"))
+
+dt_innova[, datetime := floor_date(datetime, unit = "1 minute")]
+dt_velocicalc[, datetime := floor_date(datetime, unit = "1 minute")]
+dt_wind_sensor[, datetime := floor_date(datetime, unit = "1 minute")]
+
+
+dt_innova <- dt_innova[, .(sf6_conc = mean(sf6_conc, na.rm = T) ), by = .(datetime, innova_ch)]
+
+dt_velocicalc <-
+  dt_velocicalc[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "vel",
+    "temp",
+    "rh"
+  ), by = .(datetime, equip_unit)]
+
+# to solve the issue that wind direction cannot be averaged
+dt_wind_sensor[, WIMDA_u := vel_mag_WIMDA_19 * sin(vel_angle_WIMDA_13 * pi/180)]
+dt_wind_sensor[, WIMDA_v := vel_mag_WIMDA_19 * cos(vel_angle_WIMDA_13 * pi/180)]
+
+dt_wind_sensor[, WIMWV_u := vel_mag_WIMWV_3 * sin(vel_angle_WIMWV_1 * pi/180)]
+dt_wind_sensor[, WIMWV_v := vel_mag_WIMWV_3 * cos(vel_angle_WIMWV_1 * pi/180)]
+
+
+dt_wind_sensor <-
+  dt_wind_sensor[, lapply (.SD, mean, na.rm = T), .SDcols = c(
+    "WIMDA_u",
+    "WIMDA_v",
+    "WIMWV_u",
+    "WIMWV_v",
+    "vel_mag_WIMDA_19",
+    "vel_mag_WIMWV_3",
+    "temp_WIMDA_5",
+    "rh_WIMDA_9"
+  ), by = .(datetime, wind_sensor_unit)]
+
+dt_wind_sensor[, vel_angle_WIMDA_13 := (atan2(WIMDA_u, WIMDA_v) * 360/2/pi) + 180]
+dt_wind_sensor[, vel_angle_WIMWV_1 := (atan2(WIMWV_u, WIMWV_v) * 360/2/pi) + 180]
+
+
+# write out long format without conditions --------
+dt_wind_sensor[,-c("WIMDA_u","WIMDA_v","WIMWV_u","WIMWV_v")] %>% fwrite("clean_data_1_min/wind_sensor/dt_wind_sensor.csv")
+dt_velocicalc %>% fwrite("clean_data_1_min/velocicalc/dt_velocicalc.csv")
+dt_innova %>% fwrite("clean_data_1_min/innova/dt_innova.csv")
 
 ```
 

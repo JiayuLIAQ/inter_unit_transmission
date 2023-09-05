@@ -4,6 +4,9 @@
 ### raw data ###
 /data
 
+### raw clean data ###
+/clean_data
+
 ### others ###
 /others
 

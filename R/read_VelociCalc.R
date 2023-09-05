@@ -4,46 +4,6 @@ path_xls <- data.table(path = list.files(no.. = FALSE, full.names = TRUE, recurs
                                          pattern = "\\.xls$"))
 path <- path_xls[path %like% "Air study_93 Henderson Road" & path %like% "VC-"]$path[1]
 
-
-
-# path <- path_xls[path %like% "Henderson_210423"]$path[4]
-# path <- path_xls[path %like% "Chem office"]$path[1]
-# dt_all <- map(path_xls[path %like% "Chem office" & path %like% "VC-"]$path, read_velocicalc_with_co2) %>% rbindlist
-
-dt_all <- map(path_xls[path %like% "Air study_93 Henderson Road" & path %like% "VC-"]$path, read_velocicalc) %>% 
-  rbindlist %>% .[!is.na(datetime)] %>% separate(base_name, c("equip_unit", "s_r", "loc", "date_id"), sep = "_") %>% setcolorder("datetime")
-
-dt_all %>% fwrite("clean_data/velocicalc/velocicalc_raw.csv")
-
-
-
-read_vc_raw <- function(path) {
-    
-    dt <- fread(path, sep = "", header = F)
-    
-    dt[, n_char := str_count(V1)]
-    dt[, n_tab := str_count(V1, "\t")]
-    dt[, n_digit := str_count(V1, "[^0-9]+")]
-    dt[, path := path]
-}
-
-dt_all <-
-  map(path_xls[path %like% "Air study_93 Henderson Road" &
-                 path %like% "VC-"]$path[35], read_vc_raw) %>% rbindlist
-dt_all[n_char == 41]
-
-dt_all %>% ggplot(aes(n_char)) + geom_histogram()
-
-path_test <- path_xls[path %like% "Air study_93 Henderson Road" & path %like% "VC-"]$path[32]
-
-
-dt <- fread(path_test, sep = "", header = F)
-
-dt[, n_char := str_count(V1)]
-dt[, n_tab := str_count(V1, "\t")]
-dt[, n_digit := str_count(V1, "[^0-9]+")]
-
-
 read_velocicalc_2 <- function(path){
   
   dt <- fread(path, sep = "", header = F)
@@ -77,3 +37,43 @@ dt_all <-
   rbindlist(fill = T) %>% .[!is.na(datetime)] %>% .[, c("p_inH20","p_hPa") := NULL]
   
 dt_all %>% fwrite("clean_data/velocicalc/velocicalc_raw.csv")
+
+
+## ----
+# path <- path_xls[path %like% "Henderson_210423"]$path[4]
+# path <- path_xls[path %like% "Chem office"]$path[1]
+# dt_all <- map(path_xls[path %like% "Chem office" & path %like% "VC-"]$path, read_velocicalc_with_co2) %>% rbindlist
+# 
+# dt_all <- map(path_xls[path %like% "Air study_93 Henderson Road" & path %like% "VC-"]$path, read_velocicalc) %>% 
+#   rbindlist %>% .[!is.na(datetime)] %>% separate(base_name, c("equip_unit", "s_r", "loc", "date_id"), sep = "_") %>% setcolorder("datetime")
+# 
+# dt_all %>% fwrite("clean_data/velocicalc/velocicalc_raw.csv")
+# 
+# 
+# 
+# read_vc_raw <- function(path) {
+#   
+#   dt <- fread(path, sep = "", header = F)
+#   
+#   dt[, n_char := str_count(V1)]
+#   dt[, n_tab := str_count(V1, "\t")]
+#   dt[, n_digit := str_count(V1, "[^0-9]+")]
+#   dt[, path := path]
+# }
+# 
+# dt_all <-
+#   map(path_xls[path %like% "Air study_93 Henderson Road" &
+#                  path %like% "VC-"]$path[35], read_vc_raw) %>% rbindlist
+# dt_all[n_char == 41]
+# 
+# dt_all %>% ggplot(aes(n_char)) + geom_histogram()
+# 
+# path_test <- path_xls[path %like% "Air study_93 Henderson Road" & path %like% "VC-"]$path[32]
+# 
+# 
+# dt <- fread(path_test, sep = "", header = F)
+# 
+# dt[, n_char := str_count(V1)]
+# dt[, n_tab := str_count(V1, "\t")]
+# dt[, n_digit := str_count(V1, "[^0-9]+")]
+# 

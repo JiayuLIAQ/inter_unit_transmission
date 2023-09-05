@@ -39,10 +39,10 @@ dt_innova <- dt_innova[!( datetime >= ymd_hm("2023-05-04 12:40") & datetime <= y
 
 
 ```{r echo=FALSE}
-cond_general_scenario <- fread(here("clean_data/conditions/general_scenario.csv"))
-cond_innova_vc <- fread(here("clean_data/conditions/innova_vc.csv"))
-cond_source_and_receptor <- fread(here("clean_data/conditions/source_and_receptor.csv"))
-cond_wind_sensor <- fread(here("clean_data/conditions/wind_sensor.csv"))
+cond_general_scenario <- fread(here("conditions/general_scenario.csv"))
+cond_innova_vc <- fread(here("conditions/innova_vc.csv"))
+cond_source_and_receptor <- fread(here("conditions/source_and_receptor.csv"))
+cond_wind_sensor <- fread(here("conditions/wind_sensor.csv"))
 
 # cond_general_scenario[, start_datetime := dmy_hm(paste(exp_date, start_time) ) - hours(8)]
 # cond_general_scenario[, end_datetime := dmy_hm(paste(exp_date, end_time) )- hours(8)]

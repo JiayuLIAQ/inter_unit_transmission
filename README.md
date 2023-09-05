@@ -1,9 +1,10 @@
 # More to be added.
 
-Please check experimental conditions, the raw data, and preliminary results [here](https://jiayuli.shinyapps.io/analysis_inter_unit_tranmission/)
+HDB raw data and preliminary analysis have been updated in the links below: 
 
-The old [link](https://jiayuliaq.shinyapps.io/check_raw_data_shiny/) for checking the raw data (only sorted by dates) and experimental conditions obsolete.
+**Raw data**: https://jiayuliaq.shinyapps.io/check_raw_data_shiny/
 
+**Preliminary** results: https://jiayuli.shinyapps.io/analysis_inter_unit_tranmission/
 
 
 ## Wind sensor 
