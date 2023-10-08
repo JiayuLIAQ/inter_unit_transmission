@@ -55,3 +55,13 @@ test_id	s_r	unit	room_type	volume	height	window_area	window_orientation	door
 26	r	#03-252	bedroom	36	2.5	1.18	south	open
 27	r	#02-252	bedroom	36	2.5	1.18	south	closed
 27	s	#03-252	bedroom	36	2.5	1.18	south	closed
+28	r	#02-252	bedroom	36	2.5	1.18	south	closed
+28	s	#03-252	bedroom	36	2.5	1.18	south	closed
+29	r	#02-252	bedroom	36	2.5	1.18	south	closed
+29	s	#03-252	bedroom	36	2.5	1.18	south	closed
+30	r	#02-252	bedroom	36	2.5	1.18	south	closed
+30	s	#03-252	bedroom	36	2.5	1.18	south	closed
+31	r	#02-252	bedroom	36	2.5	1.18	south	open
+31	s	#03-252	bedroom	36	2.5	1.18	south	closed
+32	r	#02-252	bedroom	36	2.5	1.18	south	open
+32	s	#03-252	bedroom	36	2.5	1.18	south	closed

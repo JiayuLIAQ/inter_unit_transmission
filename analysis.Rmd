@@ -534,7 +534,7 @@ p <- dt_innova[test_type == "Test" & loc == "room" & time_index > 4 ] %>%
   stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between receptor and source rooms (%)") +
   xlab("Scenarios") +
-  scale_color_brewer("Repeats", palette = "Accent") +
+  scale_color_brewer("Repeats", palette = "Set3") +
   theme(legend.position = "top") +
   guides(color = guide_legend(nrow = 1)) 
 
@@ -576,7 +576,7 @@ p <-
   stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between downstair and source room (%)") +
   xlab("Scenarios") +
-  scale_color_brewer("Repeats", palette = "Accent") +
+  scale_color_brewer("Repeats", palette = "Set3") +
   theme(legend.position = "top") +
   guides(color = guide_legend(nrow = 1)) 
 
@@ -614,7 +614,7 @@ p <-
   stat_summary(fun.y = "mean", geom = "point", shape = 23, size = 2, fill = "white", position = position_dodge(0.75)) +
   ylab("The SF6 concentration ratio between receptor window and source room (%)") +
   xlab("Scenarios") +
-  scale_color_brewer("Repeats", palette = "Accent") +
+  scale_color_brewer("Repeats", palette = "Set3") +
   theme(legend.position = "top") +
   guides(color = guide_legend(nrow = 1)) 
   # theme_classic()
@@ -685,7 +685,7 @@ dt_2 %>% melt(id.vars = c("building_type", "receptor_door", "dn", "date", "repea
   geom_col(position = "dodge") +
   ylab("The SF6 concentration ratio between different locations and source room (%)") +
   xlab("Scenarios") +
-  scale_fill_brewer("Exp repeat ID", palette = "Accent") +
+  scale_fill_brewer("Exp repeat ID", palette = "Set3") +
   # facet_wrap(vars(building_type, variable), scales = "free") +
   
   facet_grid(variable~building_type) +
