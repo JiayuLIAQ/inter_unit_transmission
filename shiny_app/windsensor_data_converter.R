@@ -80,31 +80,33 @@ ui <- fluidPage(
       
       
       tags$div(
-        tags$h5("Step 1: Choose your .txt file"),  # This is the title
+        tags$h4("Step 1: Choose your .txt file"),  # This is the title
         fileInput('file1', label = NULL,
                             accept = c('text/plain',
                                        '.txt'))
       ),
       
 
-      tags$div(style = "margin-bottom: 100px;", 
-               "This button allows you to upload the raw data in .txt format. 
-               For NEA colleagues: Uploading things are always not allowed on 
+      tags$div(style = "margin-bottom: 150px;", 
+               "This button allows you to upload the raw data in .txt format.",
+               tags$br(),  # Line break added here
+              "For NEA colleagues: uploading things are always NOT allowed on 
                SOE laptops."),
       
       tags$div(
-        tags$h5("Step 2: Download Processed Data"),  # This is the title
+        tags$h4("Step 2: Download Processed Data"),  # This is the title
         downloadButton('downloadData', 'Download')  # This is the button itself
       ),
       
-      # downloadButton('downloadData', 'Download Processed Data'),
-      
       tags$div(style = "margin-top: 20px;", "This button allows you to download the processed data in .xlsx format."),
       
-      tags$div(style = "margin-top: 50px; margin-bottom: 50px;", 
+      tags$div(style = "margin-top: 100px; margin-bottom: 50px;", 
                "This tool is built to process the raw data from AIRMAR PB150 WeatherStations, 
-  which may not be compatible with data from other sensors. 
-  If you have any questions, please contact ",
+  which may not be compatible with data from other sensors. The meaning of columns can be found",
+               tags$a(href = "https://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=EABE0D34DB3D089142757DD0DE2327D1?doi=10.1.1.593.6789&rep=rep1&type=pdf", "here"), ". ", 
+               tags$br(),  # Line break added here
+               tags$br(),  # Line break added here
+  "If you have questions, please contact ",
                tags$a(href = "https://www.researchgate.net/profile/Jiayu-Li-5", "Jiayu Li"), ", ", 
                tags$a(href = "mailto:jiayu.li@berkeley.edu", "jiayu.li@berkeley.edu"), "."
       ),
